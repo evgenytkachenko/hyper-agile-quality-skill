@@ -104,7 +104,7 @@ def test_invalid_saved_answer_is_reported_and_kept(tmp_path):
     bind_answer(folder, "1-trace", {"production_problem": "only this"})
     with pytest.raises(PassOutputError, match="saved answer for step 1-trace"):
         run_investigation(DEMO_CASE, ExchangeProvider(folder), out_dir=out)
-    kept = list((out / "raw").glob("1-trace.attempt-*.txt"))
+    kept = list((out / "raw").glob("1-trace.attempt-*.json"))
     assert kept and "only this" in kept[0].read_text(encoding="utf-8")
 
 

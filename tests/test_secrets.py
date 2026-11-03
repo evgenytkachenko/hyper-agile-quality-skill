@@ -120,7 +120,7 @@ def test_free_text_and_answers_are_masked_in_every_output(tmp_path):
     assert TOKEN not in r.stdout + r.stderr
     written = all_text(out)
     assert {"report.md", "results.json", "checks.json", "run.json", "decisions.yaml"} <= {p.name for p in out.iterdir()}
-    assert list((out / "raw").glob("*.attempt-*.txt"))
+    assert list((out / "raw").glob("*.attempt-*.json"))
     assert TOKEN not in written and "[REDACTED]" in written
     r = subprocess.run([sys.executable, "-m", "haq", "check-case", str(case)], capture_output=True, text=True,
                        env=env, timeout=120)
@@ -156,7 +156,7 @@ def test_rejected_answer_messages_and_attempts_are_masked(tmp_path):
     with pytest.raises(PassOutputError) as err:
         run_investigation(DEMO_CASE, ScriptedProvider(path), out_dir=out)
     assert TOKEN not in str(err.value)
-    assert (out / "raw" / "2-validation.attempt-1.txt").is_file() and TOKEN not in all_text(out)
+    assert (out / "raw" / "2-validation.attempt-1.json").is_file() and TOKEN not in all_text(out)
 
 
 # ------------------------------------------------------------------ independent review findings

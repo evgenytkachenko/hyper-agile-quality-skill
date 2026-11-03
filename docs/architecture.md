@@ -33,6 +33,8 @@ answer supplies for them is overwritten (tested in `tests/test_boundary.py`).
 | Methodology rules not listed below (for example "name what worked", "separate pre- and post-release knowledge") | Prompt text and `SKILL.md` | No — instructions | Not testable deterministically |
 | Accept / reject / investigate | A person, in `decisions.yaml` | Only a person; the tool never overwrites it and binds it to `result_sha256` | Fictional runs |
 | Exchange answer binding | `haq.providers.ExchangeProvider` | Yes | Fictional runs |
+| Answer sanitizing before anything is kept or shown | `haq.sanitize` | Yes, for parseable answers; unparseable text is never kept | Synthetic secrets |
+| Decision integrity (`check-decisions`) | `haq.investigate.check_decisions` | Detects changed or inconsistent files and, with `--case`, changed evidence; not signed | Fictional runs |
 
 ## Rules applied by code
 

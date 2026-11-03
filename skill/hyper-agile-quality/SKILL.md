@@ -100,8 +100,9 @@ If you add reasoning of your own, label it "agent hypothesis (not checked by haq
 ## Step 4 — Decisions
 
 Point the user to `decisions.yaml`. Do not fill it in, and never delete, overwrite or
-archive it without the user's explicit request. `haq check-decisions <out>` tells whether the
-decisions belong to the result in that folder. Do not open tickets, write tests or
+archive it without the user's explicit request. `haq check-decisions <out> --case <case>` tells
+whether the decisions belong to the result in that folder, whether the outputs are as written, and
+whether the evidence is unchanged; report its FAIL and NOT CHECKED lines as they are. Do not open tickets, write tests or
 change monitoring unless the user explicitly approves that specific action afterwards.
 
 ## Methodology references

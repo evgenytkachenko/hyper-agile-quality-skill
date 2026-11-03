@@ -124,7 +124,10 @@ def cmd_check_case(args) -> int:
 def cmd_check_decisions(args) -> int:
     from .investigate import check_decisions
 
-    ok, lines = check_decisions(Path(args.out))
+    if args.variant and not args.case:
+        raise HyperAgileError("--variant needs --case: the evidence is verified only against a case folder.")
+    ok, lines = check_decisions(Path(args.out), Path(args.case) if args.case else None,
+                                Path(args.variant) if args.variant else None)
     for line in lines:
         _say(line)
     return 0 if ok else 1
@@ -228,6 +231,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     k = sub.add_parser("check-decisions", help="Check that decisions.yaml reviews the result in an output folder.")
     k.add_argument("out")
+    k.add_argument("--case", help="Also verify that this case folder's evidence is unchanged.")
+    k.add_argument("--variant", help="The variant folder used for the run, with --case.")
     k.set_defaults(func=cmd_check_decisions)
 
     m = sub.add_parser("compare", help="Compare two investigation outputs.")

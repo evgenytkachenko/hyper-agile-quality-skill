@@ -78,7 +78,8 @@ release note, with identical answers (excerpt of [docs/sample-output/comparison.
 Each run writes `report.md`, `results.json` (answers as given and after checks),
 `checks.json` (every rule that changed something), `run.json` (provenance and file hashes)
 and `decisions.yaml` (empty, for a person to fill in, bound to this exact result), plus `raw/`
-with every answer attempt as received (masked), including attempts that failed validation.
+with a sanitized record of every answer attempt, including attempts that failed validation
+(see "Answer records" below).
 Attempts from earlier invocations of an unfinished run are kept too; `run.json` lists the
 attempts of the invocation that finished. An exchange answer refused for its binding is not
 copied to `raw/`; it stays, unchanged, in the answers folder.
@@ -92,8 +93,32 @@ copied to `raw/`; it stays, unchanged, in the answers folder.
   and removed only once the new run has written its result, so a failed run loses nothing.
 - If `decisions.yaml` differs from the template the tool wrote, the run is refused and nothing is changed.
   `--archive-decisions` renames it to `decisions.superseded-<result>.yaml` and starts a fresh one.
-- `decisions.yaml` names the `result_sha256` it reviews. `haq check-decisions <out>` fails when the
-  decisions do not belong to the result in that folder, so changed evidence never inherits an old approval.
+- `decisions.yaml` names the `result_sha256` it reviews. `haq check-decisions <out> [--case <case>
+  [--variant <variant>]]` fails when the decisions name a different result, when the result no longer
+  recomputes from `results.json` and `run.json`, when `report.md`, `results.json` or `checks.json` differ
+  from what the run wrote, or (with `--case`) when the case folder's evidence has changed. It also fails
+  when `decisions.yaml` holds anything outside its template: another case, extra keys or fields, an item
+  the result does not have, a decision other than accept, reject or investigate, or a checked status
+  that differs from the result's. Without `--case` it says that the
+  evidence was not checked, and it always lists what it does not verify (the `raw/` records, other
+  `run.json` fields, the installed tool and methodology versions). Nothing is signed: these checks
+  detect changed or inconsistent files, not a deliberate, consistent rewrite of all of them.
+
+## Answer records (`raw/`)
+
+Each attempt is kept as `raw/<step>.attempt-<n>.json`, written before the answer is validated:
+
+- A parseable answer is decoded first, so JSON escapes cannot hide a token, then sanitized
+  recursively: string values and keys are masked with the engine's patterns, and the whole value
+  under a credential-like key (password, `db_password`, `password_hash`, secret, token, API key,
+  auth, credential, cookie, session ID, connection string, DSN, ...) is replaced. Only this sanitized form is kept, validated, used in a repair prompt
+  or shown. Text outside the JSON object (reasoning, prose, code fences) is not kept; its length is.
+- An answer that cannot be parsed (malformed, truncated, not an object, nested too deeply, or
+  containing unpaired surrogate escapes) cannot be sanitized
+  safely, so its text is not kept or shown anywhere. The record holds only its length and the
+  parser's reason, which names a position, never content. To diagnose such an answer, reproduce
+  it with a model you control.
+- Validation errors are reported by field and message, never with the offending value.
 
 ## Investigate your own case
 
@@ -184,11 +209,13 @@ See [docs/architecture.md](docs/architecture.md) for every rule and where it com
 pytest
 ```
 
-113 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
+160 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
 the boundary between answers and checks (engine-set fields ignored, mocked Ollama including
 repair, cut-off and locality cases), exchange bindings (changed evidence, changed earlier
 answers), decision protection, secret handling at every input and output, answer vocabulary,
-duplicate IDs, ambiguous evidence identities, retained failed attempts, CLI behavior and
+duplicate IDs, ambiguous evidence identities, sanitized answer records (sensitive keys,
+escaped tokens, nested values, malformed and truncated answers, repair prompts), decision
+integrity checks, CLI behavior and
 vendored-file hashes.
 Behavior is verified with fictional fixtures, scripted answers and mocked model traffic only.
 
@@ -203,8 +230,11 @@ Behavior is verified with fictional fixtures, scripted answers and mocked model 
 - A single fictional case and one variant are included; they show behavior, not usefulness on
   real incidents.
 - Small local models may fail the JSON schemas or the confidence vocabulary; one repair attempt
-  is made, then the run stops. Every attempt is kept (masked) under `raw/`.
-- Masking uses the engine's patterns; a credential in a format they do not recognize is not masked.
+  is made, then the run stops. Every attempt is kept, sanitized, under `raw/`; an unparseable
+  answer's text is not kept.
+- Masking uses the engine's patterns and credential-like key names. A secret in a format they do
+  not recognize, written as ordinary text under an ordinary field (for example a word-only
+  password inside a finding), is not masked.
 
 ## Relationship to the book
 

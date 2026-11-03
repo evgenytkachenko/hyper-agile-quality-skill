@@ -108,7 +108,7 @@ def test_model_with_invalid_confidence_gets_a_repair_attempt(tmp_path):
     assert len(seen) == 4 and "'HIGH' is not one of" in seen[3]["messages"][1]["content"]
     assert inv.hypotheses.hypotheses[0].confidence == "STRONGLY SUPPORTED"
     assert sorted(p.name for p in (out / "raw").iterdir()) == [
-        "1-trace.attempt-1.txt", "2-validation.attempt-1.txt", "3-hypotheses.attempt-1.txt", "3-hypotheses.attempt-2.txt"]
+        "1-trace.attempt-1.json", "2-validation.attempt-1.json", "3-hypotheses.attempt-1.json", "3-hypotheses.attempt-2.json"]
 
 
 # ------------------------------------------------------------------ duplicate IDs
@@ -195,9 +195,11 @@ def test_failed_saved_answer_is_kept_and_named(tmp_path):
     def mutate(d):
         d["2-validation"] = "not an object"
     out = tmp_path / "out"
-    with pytest.raises(PassOutputError, match="Every attempt is kept under"):
+    with pytest.raises(PassOutputError, match="could not be parsed .* Every attempt is kept, sanitized, under"):
         run_investigation(DEMO_CASE, scripted(tmp_path, mutate), out_dir=out)
-    assert (out / "raw" / "2-validation.attempt-1.txt").read_text() == "not an object"
+    record = json.loads((out / "raw" / "2-validation.attempt-1.json").read_text())
+    assert record["status"] == "unparseable" and record["characters_received"] == len("not an object")
+    assert "not an object" not in json.dumps(record)
 
 
 def test_model_failing_twice_keeps_both_attempts(tmp_path):
@@ -211,7 +213,9 @@ def test_model_failing_twice_keeps_both_attempts(tmp_path):
     provider = make_ollama("http://localhost:11434", "m", transport=httpx.MockTransport(handler))
     with pytest.raises(PassOutputError):
         run_investigation(DEMO_CASE, provider, out_dir=out)
-    assert [(out / "raw" / f"1-trace.attempt-{n}.txt").read_text() for n in (1, 2)] == contents
+    records = [json.loads((out / "raw" / f"1-trace.attempt-{n}.json").read_text()) for n in (1, 2)]
+    assert [r["status"] for r in records] == ["unparseable", "unparseable"]
+    assert not any(c in json.dumps(records) for c in contents)
 
 
 def test_attempts_are_numbered_across_reruns(tmp_path):
@@ -221,7 +225,7 @@ def test_attempts_are_numbered_across_reruns(tmp_path):
     for _ in range(2):
         with pytest.raises(PassOutputError):
             run_investigation(DEMO_CASE, scripted(tmp_path, mutate), out_dir=out)
-    assert sorted(p.name for p in (out / "raw").iterdir()) == ["1-trace.attempt-1.txt", "1-trace.attempt-2.txt"]
+    assert sorted(p.name for p in (out / "raw").iterdir()) == ["1-trace.attempt-1.json", "1-trace.attempt-2.json"]
 
 
 def test_masking_does_not_break_a_valid_answer(tmp_path):

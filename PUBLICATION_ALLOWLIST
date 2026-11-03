@@ -9,9 +9,9 @@ docs/RELEASE-CHECKLIST.md
 docs/sample-output/baseline/checks.json
 docs/sample-output/baseline/decisions.yaml
 docs/sample-output/baseline/haq-output.json
-docs/sample-output/baseline/raw/1-trace.attempt-1.txt
-docs/sample-output/baseline/raw/2-validation.attempt-1.txt
-docs/sample-output/baseline/raw/3-hypotheses.attempt-1.txt
+docs/sample-output/baseline/raw/1-trace.attempt-1.json
+docs/sample-output/baseline/raw/2-validation.attempt-1.json
+docs/sample-output/baseline/raw/3-hypotheses.attempt-1.json
 docs/sample-output/baseline/report.md
 docs/sample-output/baseline/results.json
 docs/sample-output/baseline/run.json
@@ -19,9 +19,9 @@ docs/sample-output/comparison.md
 docs/sample-output/missing-evidence/checks.json
 docs/sample-output/missing-evidence/decisions.yaml
 docs/sample-output/missing-evidence/haq-output.json
-docs/sample-output/missing-evidence/raw/1-trace.attempt-1.txt
-docs/sample-output/missing-evidence/raw/2-validation.attempt-1.txt
-docs/sample-output/missing-evidence/raw/3-hypotheses.attempt-1.txt
+docs/sample-output/missing-evidence/raw/1-trace.attempt-1.json
+docs/sample-output/missing-evidence/raw/2-validation.attempt-1.json
+docs/sample-output/missing-evidence/raw/3-hypotheses.attempt-1.json
 docs/sample-output/missing-evidence/report.md
 docs/sample-output/missing-evidence/results.json
 docs/sample-output/missing-evidence/run.json
@@ -73,6 +73,7 @@ src/haq/investigate.py
 src/haq/prompts.py
 src/haq/providers.py
 src/haq/report.py
+src/haq/sanitize.py
 tests/conftest.py
 tests/test_adapters.py
 tests/test_boundary.py
@@ -80,6 +81,7 @@ tests/test_cli.py
 tests/test_decisions.py
 tests/test_demo.py
 tests/test_exchange.py
+tests/test_raw_secrets.py
 tests/test_secrets.py
 tests/test_validation.py
 tests/test_vendored.py

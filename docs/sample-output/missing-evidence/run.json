@@ -1,7 +1,7 @@
 {
  "tool": "hyper-agile-quality-skill 0.1.0",
  "engine_source_commit": "88b9b9f",
- "finished_at": "2026-11-03T17:31:46+00:00",
+ "finished_at": "2026-11-03T18:06:40+00:00",
  "case_id": "checkout-promo+missing-evidence",
  "variant": "missing-evidence",
  "answers": {
@@ -15,13 +15,13 @@
   },
   "attempt_files": {
    "1-trace": [
-    "raw/1-trace.attempt-1.txt"
+    "raw/1-trace.attempt-1.json"
    ],
    "2-validation": [
-    "raw/2-validation.attempt-1.txt"
+    "raw/2-validation.attempt-1.json"
    ],
    "3-hypotheses": [
-    "raw/3-hypotheses.attempt-1.txt"
+    "raw/3-hypotheses.attempt-1.json"
    ]
   },
   "exchange_bindings": {}
@@ -47,6 +47,45 @@
  },
  "result_sha256": "a22f868a391572f66dcdba761354065470f2122dcb00cf9f2be37e8e2bb9fc93",
  "report_sha256": "4bd2afd82667cfaa1643f163d40f5464fc6d425e94eea5974043302ddd917af6",
+ "result_basis": {
+  "tool": "0.1.0",
+  "engine_source_commit": "88b9b9f",
+  "case_id": "checkout-promo+missing-evidence",
+  "variant": "missing-evidence",
+  "evidence_files_sha256": {
+   "case.yaml": "08840954ec72423072e4cff349f204f435c292c257782ed989e96b86ddcf038f",
+   "code-change.md": "b52cca1217b6930a89a74870862879ee0a7b12a6938e3d2f2104f21f5f9922f6",
+   "documentation.md": "5e55cd958396fdbff866d321cf9639e2eff546ce2447c121df93786dc9710a1d",
+   "fix-change.md": "44ff5df9932c920ae9bda69f1d9c05c6428dafcc93a5b4748a17f1b5174198a5",
+   "issues/SHOP-455.yaml": "23fa2ccfb5865590f58cd5c554b15fb81a9d726690b7b3f357b99b2ea4a6b073",
+   "issues/SHOP-482.yaml": "09b76ca2ba7af5c6b96173e7d4443baeab946977577746490f69385fe15270fd",
+   "production-learning.md": "0aa161306be867f8d8fe70a84a0e0caab8943a6eac77ad67adf6273032a2f4ef",
+   "releases/4.2.0.yaml": "36313cbdfb638fa87ea5da2037f5a26a0c8b498e8e5f7b3df7af0afdb48ee3d8"
+  },
+  "methodology_sha256": {
+   "SKILL.md": "788352b7bf4e7ece663c094e11f9dcfc28cc177ac30c33b664e61a7604f25318",
+   "references/quality-loop.md": "276cb3af9a5c90432928480f15c25a51bb6909a33b93fd3a04ed826f909a9952",
+   "references/causal-model.md": "f61e5353b4b8b0edabd48c1afe7e3725326cba90fed766a9c3d4acbdb2ee5f12",
+   "references/evidence-and-actions.md": "07f5538923d9f722043d2cffe6b873f4a89c2fd49a85d43db7bc7f36348a4c1d",
+   "references/tool-mapping.md": "e1dceb5ce122e8df86deb51fc248cf54fb6629aa561c77d06d2ffdf776d2c048",
+   "references/report-template.md": "deae89f1688068f8c78b0212ba910e455de3529a80ec7000ab400db076c830c5",
+   "references/evaluation-harness.md": "f945bad1b6124d85a1092418ca4102658a9b9895ab9032354d97f361741a4dbf"
+  },
+  "answers": {
+   "provider": "scripted",
+   "model": "scripted:checkout-promo.responses.json",
+   "accepted_sha256": {
+    "1-trace": "fb4d175bacf7e37ad07260e929eadb336c0c36d862a4d32e19cb6f982f0aa3b4",
+    "2-validation": "5a76da9dcc4165bc306066f866d09b18dc6aff2438cf4e03b8877cdff5d81a28",
+    "3-hypotheses": "d6d5c657d55b6ff046fe5fba9792f640472cddb00582bb9f987238a208d184ba"
+   }
+  }
+ },
+ "artifacts_sha256": {
+  "report.md": "4bd2afd82667cfaa1643f163d40f5464fc6d425e94eea5974043302ddd917af6",
+  "results.json": "c03132b52bec7304c716b2840b2699668a157e75dc6a0af94ca8099735d3e2a8",
+  "checks.json": "97c28bdc6845ca20cb81486cb3f4a7a164dfc5e11a044827c6a8fef29ead8bc7"
+ },
  "decisions_template_sha256": "c78e7a3a9bb0f1aa811890b14db760d4ecd2c97e16468afd605265c0bd3c6eef",
  "warnings": []
 }

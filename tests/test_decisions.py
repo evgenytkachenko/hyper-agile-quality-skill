@@ -5,6 +5,8 @@ import os
 import subprocess
 import sys
 
+import pytest
+
 from conftest import ROOT, bind_answer
 
 from haq.cli import DEMO_CASE, DEMO_RESPONSES
@@ -81,7 +83,7 @@ def test_decisions_copied_to_a_changed_result_do_not_apply(tmp_path):
     haq("demo", "--variant", "missing-evidence", "--out", str(b))
     (b / "decisions.yaml").write_text(decide(a))
     r = haq("check-decisions", str(b))
-    assert r.returncode == 1 and "not bound to this result" in r.stdout
+    assert r.returncode == 1 and "do not apply to this report" in r.stdout
 
 
 def test_exchange_rerun_cannot_replace_decisions(tmp_path):
@@ -163,4 +165,141 @@ def test_successful_overwrite_removes_the_previous_result(tmp_path):
     assert haq("demo", "--variant", "missing-evidence", "--out", str(out), "--overwrite").returncode == 0
     assert not (out / "previous-run").exists()
     assert sorted(p.name for p in (out / "raw").iterdir()) == [
-        "1-trace.attempt-1.txt", "2-validation.attempt-1.txt", "3-hypotheses.attempt-1.txt"]
+        "1-trace.attempt-1.json", "2-validation.attempt-1.json", "3-hypotheses.attempt-1.json"]
+
+
+# ------------------------------------------------------------------ check-decisions verifies the result
+
+
+def finished(tmp_path, *extra):
+    out = tmp_path / "a"
+    assert haq("demo", "--out", str(out), *extra).returncode == 0
+    decide(out)
+    return out
+
+
+def test_intact_result_passes_and_says_what_was_not_checked(tmp_path):
+    out = finished(tmp_path)
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 0 and "NOT CHECKED: evidence" in r.stdout and "nothing is signed" in r.stdout
+    r = haq("check-decisions", str(out), "--case", str(DEMO_CASE))
+    assert r.returncode == 0 and "OK: the case folder's evidence is unchanged." in r.stdout
+
+
+@pytest.mark.parametrize("name", ["report.md", "checks.json"])
+def test_edited_output_file_fails(tmp_path, name):
+    out = finished(tmp_path)
+    (out / name).write_text((out / name).read_text() + "\n", encoding="utf-8")
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and f"FAIL: {name} differs from the file this run wrote." in r.stdout
+
+
+def test_edited_checked_result_fails_even_with_hashes_updated(tmp_path):
+    """Someone flips a hypothesis to SUPPORTED and updates the recorded file hash; the digest no longer recomputes."""
+    import hashlib
+
+    out = finished(tmp_path)
+    results = json.loads((out / "results.json").read_text())
+    results["checked"]["3-hypotheses"]["hypotheses"][5]["check_status"] = "SUPPORTED"
+    (out / "results.json").write_text(json.dumps(results, indent=1))
+    run = json.loads((out / "run.json").read_text())
+    run["artifacts_sha256"]["results.json"] = hashlib.sha256((out / "results.json").read_bytes()).hexdigest()
+    (out / "run.json").write_text(json.dumps(run, indent=1))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "result digest recomputed from them does not match" in r.stdout
+
+
+def test_forged_digest_in_run_and_decisions_fails(tmp_path):
+    out = finished(tmp_path)
+    run = json.loads((out / "run.json").read_text())
+    forged = "f" * 64
+    (out / "decisions.yaml").write_text((out / "decisions.yaml").read_text().replace(run["result_sha256"], forged))
+    run["result_sha256"] = forged
+    (out / "run.json").write_text(json.dumps(run, indent=1))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "does not match the recorded one" in r.stdout
+
+
+def test_changed_evidence_is_detected_with_case(tmp_path):
+    import shutil
+
+    out = finished(tmp_path)
+    case = tmp_path / "case"
+    shutil.copytree(DEMO_CASE, case)
+    (case / "tests.md").write_text((case / "tests.md").read_text() + "\n## TC-213 — added later\n")
+    r = haq("check-decisions", str(out), "--case", str(case))
+    assert r.returncode == 1 and "evidence differs" in r.stdout and "tests.md" in r.stdout
+    r = haq("check-decisions", str(out), "--case", str(DEMO_CASE), "--variant",
+            str(DEMO_CASE.parent / "variants" / "missing-evidence"))
+    assert r.returncode == 1 and "evidence differs" in r.stdout
+
+
+def test_older_run_record_cannot_be_verified(tmp_path):
+    out = finished(tmp_path)
+    run = json.loads((out / "run.json").read_text())
+    del run["result_basis"], run["artifacts_sha256"]
+    (out / "run.json").write_text(json.dumps(run, indent=1))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "cannot be recomputed" in r.stdout and "cannot be verified" in r.stdout
+
+
+# ------------------------------------------------------------------ second independent review
+
+
+@pytest.mark.parametrize("edit,message", [
+    (lambda t: t.replace("  H4:\n    checked_status: CONTRADICTED\n    decision: null",
+                         "  H4:\n    checked_status: SUPPORTED\n    decision: accept"), "checked status that is not"),
+    (lambda t: t.replace("proposals:\n", "  H99:\n    decision: accept\nproposals:\n"), "'H99', which is not"),
+    (lambda t: t.replace("decision: null", "decision: approve-release", 1), "not one of accept, reject, investigate"),
+    (lambda t: t.split("hypotheses:")[0] + "hypotheses: [H1]\n", "must be a mapping"),
+])
+def test_decisions_that_go_beyond_the_result_fail(tmp_path, edit, message):
+    out = tmp_path / "a"
+    haq("demo", "--out", str(out))
+    path = out / "decisions.yaml"
+    edited = edit(path.read_text())
+    assert edited != path.read_text()
+    path.write_text(edited)
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and message in r.stdout and "Traceback" not in r.stdout + r.stderr
+
+
+def test_check_lists_what_it_does_not_verify_and_requires_case_for_variant(tmp_path):
+    out = tmp_path / "a"
+    haq("demo", "--out", str(out))
+    r = haq("check-decisions", str(out))
+    assert "NOT CHECKED: the raw/ attempt records" in r.stdout
+    r = haq("check-decisions", str(out), "--variant", str(DEMO_CASE.parent / "variants" / "missing-evidence"))
+    assert r.returncode == 2 and "--variant needs --case" in r.stderr
+
+
+@pytest.mark.parametrize("edit,message", [
+    (lambda t: t.replace("case: checkout-promo", "case: other"), "names a different case"),
+    (lambda t: t + "release_approval: approved\n", "keys the template does not define"),
+    (lambda t: t.replace("  H1:\n    checked_status: SUPPORTED\n    decision: null",
+                         "  H1:\n    checked_status: SUPPORTED\n    decision: accept\n    applies_to: all hypotheses"),
+     "fields the template does not define"),
+    (lambda t: t.replace("  T1:\n    decision: null", "  T1:\n    decision: accept\n    scope: everything"),
+     "fields the template does not define"),
+])
+def test_content_outside_the_template_fails(tmp_path, edit, message):
+    out = tmp_path / "a"
+    haq("demo", "--out", str(out))
+    path = out / "decisions.yaml"
+    edited = edit(path.read_text())
+    assert edited != path.read_text()
+    path.write_text(edited)
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and message in r.stdout
+
+
+def test_items_with_problems_are_not_listed_as_decided(tmp_path):
+    out = tmp_path / "a"
+    haq("demo", "--out", str(out))
+    path = out / "decisions.yaml"
+    text = path.read_text().replace("  H4:\n    checked_status: CONTRADICTED\n    decision: null",
+                                    "  H4:\n    checked_status: SUPPORTED\n    decision: accept")
+    path.write_text(text.replace("  H1:\n    checked_status: SUPPORTED\n    decision: null",
+                                 "  H1:\n    checked_status: SUPPORTED\n    decision: accept"))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "1 item(s) of this result decided: H1=accept" in r.stdout

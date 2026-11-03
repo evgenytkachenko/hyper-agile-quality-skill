@@ -25,30 +25,15 @@ from pydantic import BaseModel, ValidationError
 from . import ENGINE_SOURCE_COMMIT, __version__
 from ._engine import guards
 from ._engine.errors import HyperAgileError, PassOutputError
-from ._engine.masking import mask, mask_text
+from ._engine.masking import mask_text
 from ._engine.methodology import Methodology
 from ._engine.providers.base import ModelProvider
 from .adapters import LoadedCase, load_evidence
 from .hypotheses import QualityInvestigation, answer_problems, check_investigation
+from .sanitize import canonical, describe, intake
 from .prompts import STEPS, StepSpec, approx_tokens, schema, system_prompt, user_prompt
 
 METHODOLOGY_DIR = Path(__file__).parent / "_methodology"
-
-_THINKING = re.compile(r"<think>.*?</think>", re.S)
-_JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.S)
-
-
-def extract_json(raw: str) -> str:
-    """The JSON object in an answer (same rule as the engine's orchestrator)."""
-    text = _THINKING.sub("", raw)
-    fenced = _JSON_FENCE.search(text)
-    if fenced:
-        text = fenced.group(1)
-    start, end = text.find("{"), text.rfind("}")
-    if start == -1 or end <= start:
-        raise ValueError("no JSON object found in the response")
-    return text[start:end + 1]
-
 
 @dataclass
 class Investigation:
@@ -66,6 +51,7 @@ class Investigation:
     attempt_files: dict[str, list[str]] = field(default_factory=dict)
     accepted: dict[str, str] = field(default_factory=dict)
     bindings: dict[str, str] = field(default_factory=dict)
+    unparseable: dict[str, list[str]] = field(default_factory=dict)
 
     @property
     def trace(self):
@@ -80,22 +66,29 @@ class Investigation:
         return self.results.get("3-hypotheses")  # type: ignore[return-value]
 
 
-def _record_attempt(inv: "Investigation", raw_dir: Path | None, step: str, raw: str) -> str:
-    """Keep every answer as received (masked), before it is validated, so a failed answer is never lost."""
-    masked = mask_text(raw)
-    inv.attempts.setdefault(step, []).append(hashlib.sha256(masked.encode("utf-8")).hexdigest())
+def _record_attempt(inv: "Investigation", raw_dir: Path | None, step: str, raw: str) -> dict | None:
+    """Sanitize an answer (see sanitize.py) and keep the attempt record, before it is validated. Returns the
+    sanitized object, or None when the answer could not be parsed; its text is then neither kept nor shown."""
+    clean, record = intake(raw)
+    text = json.dumps({"step": step, **record}, indent=1, ensure_ascii=False) + "\n"
+    inv.attempts.setdefault(step, []).append(hashlib.sha256(text.encode("utf-8")).hexdigest())
     if raw_dir is not None:
         n = 1
-        while (raw_dir / f"{step}.attempt-{n}.txt").exists():
+        while (raw_dir / f"{step}.attempt-{n}.json").exists():
             n += 1
-        (raw_dir / f"{step}.attempt-{n}.txt").write_text(masked, encoding="utf-8")
-        inv.attempt_files.setdefault(step, []).append(f"raw/{step}.attempt-{n}.txt")
-    return masked
+        (raw_dir / f"{step}.attempt-{n}.json").write_text(text, encoding="utf-8")
+        inv.attempt_files.setdefault(step, []).append(f"raw/{step}.attempt-{n}.json")
+    if clean is None:
+        inv.unparseable.setdefault(step, []).append(record["reason"])
+    return clean
 
 
-def _parse(masked: str, output: type[BaseModel], levels: list[str]) -> BaseModel:
-    """Masked answer text -> validated model. Raises ValueError/ValidationError with masked content only."""
-    value = output.model_validate(mask(json.loads(extract_json(masked))))
+def _parse(clean: dict | None, step: str, inv: "Investigation", output: type[BaseModel],
+           levels: list[str]) -> BaseModel:
+    """Sanitized answer -> validated model. Raises ValueError/ValidationError; describe() keeps inputs out."""
+    if clean is None:
+        raise ValueError(f"the answer could not be parsed ({inv.unparseable[step][-1]}); its text is not shown.")
+    value = output.model_validate(clean)
     problems = answer_problems(value, levels)
     if problems:
         raise ValueError("; ".join(problems))
@@ -103,27 +96,27 @@ def _parse(masked: str, output: type[BaseModel], levels: list[str]) -> BaseModel
 
 
 def _ask(provider: ModelProvider, inv: "Investigation", raw_dir: Path | None, step: StepSpec, system: str,
-         user: str, json_schema: dict, levels: list[str]) -> tuple[str, BaseModel]:
+         user: str, json_schema: dict, levels: list[str]) -> tuple[dict, BaseModel]:
     """One answer, validated against the step schema and vocabulary. One repair attempt for a model, as in the
     engine; a saved (scripted or exchange) answer is never retried."""
     if hasattr(provider, "current_step"):
         provider.current_step = step.key
-    where = f" Every attempt is kept under {raw_dir}." if raw_dir else ""
-    masked = _record_attempt(inv, raw_dir, step.key, provider.generate(system, user, json_schema=json_schema))
+    where = f" Every attempt is kept, sanitized, under {raw_dir}." if raw_dir else ""
+    clean = _record_attempt(inv, raw_dir, step.key, provider.generate(system, user, json_schema=json_schema))
     try:
-        return masked, _parse(masked, step.output, levels)
+        return clean, _parse(clean, step.key, inv, step.output, levels)
     except (ValueError, ValidationError) as first:
+        problem = mask_text(describe(first))[:2000]
         if provider.name in ("scripted", "exchange"):
-            raise PassOutputError(f"The saved answer for step {step.key} cannot be used: "
-                                  f"{mask_text(str(first))[:2000]}{where}") from first
-        repair = (f"{user}\n\n# Your previous answer could not be used\n\n{mask_text(str(first))[:2000]}\n\n"
+            raise PassOutputError(f"The saved answer for step {step.key} cannot be used: {problem}{where}") from None
+        repair = (f"{user}\n\n# Your previous answer could not be used\n\n{problem}\n\n"
                   "Answer again with one JSON object that matches the schema exactly.")
-        masked = _record_attempt(inv, raw_dir, step.key, provider.generate(system, repair, json_schema=json_schema))
+        clean = _record_attempt(inv, raw_dir, step.key, provider.generate(system, repair, json_schema=json_schema))
         try:
-            return masked, _parse(masked, step.output, levels)
+            return clean, _parse(clean, step.key, inv, step.output, levels)
         except (ValueError, ValidationError) as second:
             raise PassOutputError(f"Step {step.key}: the answer could not be used after one repair attempt: "
-                                  f"{mask_text(str(second))[:500]}{where}") from second
+                                  f"{mask_text(describe(second))[:500]}{where}") from None
 
 
 def run_investigation(case_dir: Path, provider: ModelProvider, *, variant_dir: Path | None = None,
@@ -152,8 +145,8 @@ def run_investigation(case_dir: Path, provider: ModelProvider, *, variant_dir: P
             "methodology_sha256": inv.methodology_hashes,
             "earlier_answers_sha256": {k: v for k, v in inv.accepted.items()},
         }
-        masked, value = _ask(provider, inv, raw_dir, step, system, user, schema(step, methodology), levels)
-        inv.accepted[step.key] = hashlib.sha256(masked.encode("utf-8")).hexdigest()
+        clean, value = _ask(provider, inv, raw_dir, step, system, user, schema(step, methodology), levels)
+        inv.accepted[step.key] = hashlib.sha256(canonical(clean).encode("utf-8")).hexdigest()
         inv.raw[step.key] = value.model_copy(deep=True)
 
         if step.engine_pass is not None:
@@ -194,16 +187,24 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def result_digest(inv: Investigation) -> str:
-    """What a person's decisions review: the checked results and everything they were derived from. No timestamps."""
-    payload = {
+def result_basis(inv: Investigation) -> dict:
+    """Everything a result was derived from, apart from the checked results themselves. Recorded in run.json."""
+    return {
         "tool": __version__, "engine_source_commit": ENGINE_SOURCE_COMMIT,
         "case_id": inv.case.bundle.case_id, "variant": inv.case.variant,
         "evidence_files_sha256": inv.case.files, "methodology_sha256": inv.methodology_hashes,
         "answers": {"provider": inv.provider_name, "model": inv.model, "accepted_sha256": inv.accepted},
-        "checked": {k: v.model_dump(mode="json") for k, v in inv.results.items()},
     }
+
+
+def digest_of(basis: dict, checked: dict) -> str:
+    payload = {**basis, "checked": checked}
     return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def result_digest(inv: Investigation) -> str:
+    """What a person's decisions review: the checked results and everything they were derived from. No timestamps."""
+    return digest_of(result_basis(inv), {k: v.model_dump(mode="json") for k, v in inv.results.items()})
 
 
 def decisions_state(out_dir: Path) -> str:
@@ -315,6 +316,8 @@ def write_outputs(inv: Investigation, out_dir: Path) -> dict[str, Path]:
         "evidence_files_sha256": inv.case.files,
         "result_sha256": digest,
         "report_sha256": hashlib.sha256(report.encode()).hexdigest(),
+        "result_basis": result_basis(inv),
+        "artifacts_sha256": {name: _sha(out_dir / name) for name in ("report.md", "results.json", "checks.json")},
         "decisions_template_sha256": hashlib.sha256(template.encode()).hexdigest(),
         "warnings": inv.warnings,
     }, indent=1) + "\n", encoding="utf-8")
@@ -323,22 +326,134 @@ def write_outputs(inv: Investigation, out_dir: Path) -> dict[str, Path]:
     return paths
 
 
-def check_decisions(out_dir: Path) -> tuple[bool, list[str]]:
-    """Whether decisions.yaml reviews the result now in the folder, and what it records."""
-    run = json.loads((out_dir / "run.json").read_text(encoding="utf-8"))
+def check_decisions(out_dir: Path, case_dir: Path | None = None,
+                    variant_dir: Path | None = None) -> tuple[bool, list[str]]:
+    """Whether decisions.yaml reviews the result now in the folder, and whether that result is intact.
+
+    Verified: decisions.yaml names the result digest recorded in run.json; that digest is recomputed from
+    results.json and the recorded basis; report.md, results.json and checks.json match the hashes recorded when they
+    were written; with case_dir, the evidence files in the case folder (and variant) are re-hashed and compared.
+    Not verified: a deliberate, consistent rewrite of every file (nothing is signed), and, without case_dir, whether
+    the evidence changed after the run."""
+    problems: list[str] = []
+    try:
+        run = json.loads((out_dir / "run.json").read_text(encoding="utf-8"))
+        results = json.loads((out_dir / "results.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return False, [f"FAIL: run.json or results.json is missing or unreadable ({type(exc).__name__}); "
+                       "no decision here can be tied to a result."]
     try:
         data = yaml.safe_load((out_dir / DECISIONS).read_text(encoding="utf-8")) or {}
     except FileNotFoundError:
-        return False, [f"No {DECISIONS} in {out_dir}."]
+        return False, [f"FAIL: no {DECISIONS} in {out_dir}."]
     except yaml.YAMLError as exc:
-        return False, [f"{DECISIONS} is not readable YAML ({type(exc).__name__})."]
-    lines, ok = [], True
-    if not isinstance(data, dict) or data.get("result_sha256") != run.get("result_sha256"):
-        ok = False
-        named = data.get("result_sha256") if isinstance(data, dict) else None
-        lines.append(f"{DECISIONS} is not bound to this result (it names {short_digest(named)}, the result is "
-                     f"{short_digest(run.get('result_sha256'))}). Its decisions do not apply to this report.")
-    items = {**(data.get("hypotheses") or {}), **(data.get("proposals") or {})} if isinstance(data, dict) else {}
-    decided = {k: v.get("decision") for k, v in items.items() if isinstance(v, dict) and v.get("decision")}
-    lines.append(f"{len(decided)} of {len(items)} item(s) decided" + (": " + ", ".join(f"{k}={v}" for k, v in decided.items()) if decided else "."))
-    return ok, lines
+        return False, [f"FAIL: {DECISIONS} is not readable YAML ({type(exc).__name__})."]
+    recorded = run.get("result_sha256")
+    named = data.get("result_sha256") if isinstance(data, dict) else None
+    if named != recorded:
+        problems.append(f"{DECISIONS} names result {short_digest(named)}, but this folder's result is "
+                        f"{short_digest(recorded)}. Its decisions do not apply to this report.")
+    basis, checked = run.get("result_basis"), results.get("checked")
+    if not isinstance(basis, dict) or not isinstance(checked, dict):
+        problems.append("run.json has no recorded result basis (written by an older version?); the result cannot be "
+                        "recomputed, so it cannot be verified.")
+    elif digest_of(basis, checked) != recorded or results.get("result_sha256") != recorded:
+        problems.append("results.json or run.json was changed after the run: the result digest recomputed from them "
+                        "does not match the recorded one.")
+    artifacts = run.get("artifacts_sha256")
+    if not isinstance(artifacts, dict):
+        problems.append("run.json has no recorded output hashes; report.md, results.json and checks.json cannot be "
+                        "verified.")
+    else:
+        for name in ("report.md", "results.json", "checks.json"):
+            path = out_dir / name
+            if not path.is_file() or _sha(path) != artifacts.get(name):
+                problems.append(f"{name} differs from the file this run wrote.")
+    if case_dir is not None:
+        try:
+            current = load_evidence(case_dir, variant_dir)
+        except HyperAgileError as exc:
+            problems.append(f"The case folder could not be loaded to verify the evidence: {mask_text(str(exc))}")
+        else:
+            was = basis if isinstance(basis, dict) else {}
+            if current.bundle.case_id != was.get("case_id") or current.files != was.get("evidence_files_sha256"):
+                changed = sorted(set(current.files.items()) ^ set((was.get("evidence_files_sha256") or {}).items()))
+                names = sorted({n for n, _ in changed})
+                problems.append("The evidence differs from what this result was derived from"
+                                + (f" ({len(names)} file(s): {', '.join(names[:10])})" if names else
+                                   " (a different case or variant)") + ". Decisions do not carry over to it.")
+    lines = [f"FAIL: {p}" for p in problems]
+    if not problems:
+        lines.append("OK: decisions.yaml names this result, the result recomputes from results.json and run.json, and "
+                     "report.md, results.json and checks.json are as written.")
+        lines.append("OK: the case folder's evidence is unchanged." if case_dir is not None else
+                     "NOT CHECKED: evidence. Pass --case (and --variant) to verify the case folder has not changed.")
+    decided, content = _decision_content(data, checked if isinstance(checked, dict) else {},
+                                         (basis or {}).get("case_id") if isinstance(basis, dict) else None)
+    if content:
+        lines = [line for line in lines if not line.startswith("OK: decisions.yaml names")]
+        lines[:0] = [f"FAIL: {p}" for p in content]
+        problems += content
+    lines.append(f"{len(decided)} item(s) of this result decided" + (": " + ", ".join(f"{k}={v}" for k, v in decided.items()) if decided else "."))
+    lines.append("NOT CHECKED: the raw/ attempt records, run.json fields other than the recorded result basis and output "
+                 "hashes (for example warnings and the answer-source label), and whether the installed tool and "
+                 "methodology are the versions recorded in the basis.")
+    lines.append("These checks detect changed or inconsistent files; they cannot detect a deliberate, consistent "
+                 "rewrite of all of them, because nothing is signed.")
+    return not problems, lines
+
+
+DECISION_VALUES = ("accept", "reject", "investigate")
+
+
+TOP_LEVEL_KEYS = {"case", "result_sha256", "hypotheses", "proposals"}
+ITEM_KEYS = {"hypotheses": {"checked_status", "decision", "decided_by_role", "reason"},
+             "proposals": {"decision", "decided_by_role", "reason"}}
+
+
+def _decision_content(data: object, checked: dict, case_id: str | None) -> tuple[dict[str, str], list[str]]:
+    """The valid decisions recorded for this result's items, and every way decisions.yaml goes beyond the template
+    for that result: other keys or fields, another case, unknown items, decision values outside the template's, or a
+    checked status that is not the result's. Anything outside the template could be read as a wider approval."""
+    hyp = (checked.get("3-hypotheses") or {}) if isinstance(checked, dict) else {}
+    statuses = {h.get("id"): h.get("check_status") for h in hyp.get("hypotheses") or [] if isinstance(h, dict)}
+    proposals = {p.get("id") for k in ("proposed_regression_tests", "proposed_controls")
+                 for p in hyp.get(k) or [] if isinstance(p, dict)}
+    problems: list[str] = []
+    decided: dict[str, str] = {}
+    if not isinstance(data, dict):
+        return decided, [f"{DECISIONS} is not a mapping."]
+    extra = sorted(mask_text(str(k))[:40] for k in data if k not in TOP_LEVEL_KEYS)
+    if extra:
+        problems.append(f"{DECISIONS} has keys the template does not define ({', '.join(extra)}); "
+                        "only per-item decisions are recognized.")
+    if data.get("case") != case_id:
+        problems.append(f"{DECISIONS} names a different case than this result.")
+    for section, known in (("hypotheses", set(statuses)), ("proposals", proposals)):
+        entries = data.get(section)
+        if entries is None:
+            continue
+        if not isinstance(entries, dict):
+            problems.append(f"{DECISIONS}: '{section}' must be a mapping of item IDs.")
+            continue
+        for item, entry in entries.items():
+            label = mask_text(str(item))[:40]
+            if item not in known:
+                problems.append(f"{DECISIONS} records '{label}', which is not a {section[:-1] if section == 'proposals' else 'hypothesis'} of this result.")
+                continue
+            if not isinstance(entry, dict):
+                problems.append(f"{DECISIONS}: '{label}' must be a mapping.")
+                continue
+            before = len(problems)
+            fields = sorted(mask_text(str(k))[:40] for k in entry if k not in ITEM_KEYS[section])
+            if fields:
+                problems.append(f"{DECISIONS}: '{label}' has fields the template does not define ({', '.join(fields)}).")
+            decision = entry.get("decision")
+            if decision is not None and decision not in DECISION_VALUES:
+                problems.append(f"{DECISIONS}: '{label}' has a decision that is not one of {', '.join(DECISION_VALUES)}.")
+            if section == "hypotheses" and entry.get("checked_status") != statuses[item]:
+                problems.append(f"{DECISIONS}: '{label}' records a checked status that is not this result's "
+                                f"({statuses[item]}).")
+            if decision is not None and len(problems) == before:
+                decided[str(item)] = decision
+    return decided, problems
