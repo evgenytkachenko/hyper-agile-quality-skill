@@ -21,6 +21,8 @@ from typing import Any, get_args
 
 from pydantic import BaseModel, ValidationError
 
+from ._engine.passes import ENGINE_SET
+
 from ._engine.masking import MASK, mask_text
 
 # Broader than the engine's exact-name list: any key that names a credential, wherever it appears in the name.
@@ -70,16 +72,19 @@ def _model_of(annotation: Any) -> type[BaseModel] | None:
 
 
 def prune(value: Any, model: type[BaseModel]) -> tuple[Any, int]:
-    """Keep only the keys the step's schema defines, at every depth; return the kept value and how many were dropped.
+    """Keep only the keys the step's schema asks the answer for, at every depth; return the kept value and how many
+    were dropped.
 
     A key outside the schema is never used, and its name may abbreviate a credential in a way no pattern can tell
-    apart from an ordinary word (dbPass, bypass), so it is not kept at all."""
+    apart from an ordinary word (dbPass, bypass), so it is not kept at all. Fields the engine sets ("Set by the
+    engine" in their description) are not the answer's to give either: some are free-form dicts this function could
+    not filter, so they are dropped and their defaults apply."""
     if not isinstance(value, dict):
         return value, 0
     kept, dropped = {}, 0
     for key, item in value.items():
         field = model.model_fields.get(key)
-        if field is None:
+        if field is None or ENGINE_SET in (field.description or ""):
             dropped += 1
             continue
         inner = _model_of(field.annotation)

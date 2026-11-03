@@ -462,9 +462,14 @@ def _decision_content(data: object, checked: dict, case_id: str | None) -> tuple
         hyp = {}
         problems.append("results.json does not hold a hypotheses result in the expected form; no decision can be "
                         "matched to it.")
-    statuses = {h.get("id"): h.get("check_status") for h in hyp.get("hypotheses") or [] if isinstance(h, dict)}
-    proposals = {p.get("id") for k in ("proposed_regression_tests", "proposed_controls")
-                 for p in hyp.get(k) or [] if isinstance(p, dict)}
+    items = [h for h in hyp.get("hypotheses") or []] + [p for k in ("proposed_regression_tests", "proposed_controls")
+                                                       for p in hyp.get(k) or []]
+    if not all(isinstance(x, dict) and isinstance(x.get("id"), str) for x in items):
+        problems.append("results.json holds an item without a text ID; no decision can be matched to it.")
+    statuses = {h["id"]: h.get("check_status") for h in hyp.get("hypotheses") or []
+                if isinstance(h, dict) and isinstance(h.get("id"), str)}
+    proposals = {p["id"] for k in ("proposed_regression_tests", "proposed_controls") for p in hyp.get(k) or []
+                 if isinstance(p, dict) and isinstance(p.get("id"), str)}
     decided: dict[str, str] = {}
     if not isinstance(data, dict):
         return decided, [f"{DECISIONS} is not a mapping."]

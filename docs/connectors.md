@@ -80,6 +80,10 @@ A folder with `variant.yaml` (`remove: [paths]`) plus replacement files, applied
 
 ### Masking and limits
 
+Masking cannot catch every secret: a credential in an unrecognized format, and confidential or
+personal information that does not look like a credential, pass through unchanged. Review evidence
+before running `haq` and review every output before sharing it.
+
 Credential-like strings in free text are masked with the engine's patterns before anything is
 shown to a model or written. Identifiers — file paths, case and variant IDs, issue keys, link
 targets and relations, release versions — that look like credentials, or that contain non-ASCII

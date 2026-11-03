@@ -381,3 +381,17 @@ def test_results_json_that_is_not_an_object_fails_cleanly(tmp_path):
     (out / "results.json").write_text("[]")
     r = haq("check-decisions", str(out))
     assert r.returncode == 1 and "does not hold a JSON object" in r.stdout
+
+
+@pytest.mark.parametrize("tamper", [
+    lambda c: c["3-hypotheses"]["hypotheses"][0].__setitem__("id", ["x"]),
+    lambda c: c["3-hypotheses"]["proposed_controls"][0].__setitem__("id", {"a": 1}),
+    lambda c: c["3-hypotheses"]["proposed_regression_tests"].__setitem__(0, "T1"),
+])
+def test_non_text_item_ids_in_results_fail_cleanly(tmp_path, tamper):
+    out = demo_out(tmp_path)
+    results = json.loads((out / "results.json").read_text())
+    tamper(results["checked"])
+    (out / "results.json").write_text(json.dumps(results))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "FAIL:" in r.stdout and "unexpected" not in r.stderr

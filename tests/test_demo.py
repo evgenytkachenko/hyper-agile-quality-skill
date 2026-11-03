@@ -107,3 +107,12 @@ def test_readme_excerpts_come_from_the_sample_output():
     assert len(blocks) == 2
     for line in "\n".join(blocks).splitlines():
         assert not line.strip() or line in sample, line
+
+
+def test_documentation_warns_that_masking_cannot_catch_every_secret():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "**Masking cannot catch every secret.**" in readme
+    assert "review every output before you\n> share" in readme
+    for path in ("docs/connectors.md", "skill/hyper-agile-quality/SKILL.md"):
+        assert "Masking cannot catch every secret" in (ROOT / path).read_text(encoding="utf-8") or \
+               "masking cannot catch every secret" in (ROOT / path).read_text(encoding="utf-8"), path

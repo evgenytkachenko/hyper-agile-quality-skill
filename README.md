@@ -31,6 +31,12 @@ Its deterministic evidence checks are reused from the author's hyper-agile-engin
 The checks confirm that an identifier, link or quote is where an answer says it is. They
 cannot confirm that the evidence *means* what the answer says. Every report says so.
 
+> **Masking cannot catch every secret.** `haq` masks credential-like values it recognizes, but a
+> secret in a format no pattern knows — a word-only password, a customer name, an internal host name,
+> personal data — passes through unchanged into prompts, reports, JSON files and `raw/` records.
+> Review your evidence before giving it to any answer source, and review every output before you
+> share, commit or publish it. Masking reduces risk; it does not make content safe to share.
+
 ## Quick start (no model needed)
 
 Requirements: Python 3.12+ and pip (or [uv](https://docs.astral.sh/uv/): `uv venv` and `uv pip install` work the same way).
@@ -98,7 +104,8 @@ copied to `raw/`; it stays, unchanged, in the answers folder.
   recomputes from `results.json` and `run.json`, when `report.md`, `results.json` or `checks.json` differ
   from what the run wrote, or (with `--case`) when the case folder's evidence has changed. It also fails
   when `decisions.yaml` holds anything outside its template: another case, extra keys or fields, a
-  repeated key, an item the result does not have, a decision other than accept, reject or investigate,
+  repeated key (a merge key `<<` overridden in the same mapping counts as repeated), an item the
+  result does not have, a decision other than accept, reject or investigate,
   a role or reason that is not plain text, or a checked status that differs from the result's. When any
   check fails, it reports that no decision applies and lists recorded decisions as not applicable. Without `--case` it says that the
   evidence was not checked, and it always lists what it does not verify (the `raw/` records, other
@@ -114,8 +121,8 @@ Each attempt is kept as `raw/<step>.attempt-<n>.json`, written before the answer
   under a credential-like key (password, `db_password`, `password_hash`, secret, token, API key,
   auth, credential, cookie, session ID, connection string, DSN, ...) is replaced. Key names are matched in
   any casing and with `_`, `-`, `.` or space separators. Keys the step's answer schema does not
-  define are then dropped at every depth (their number is recorded), because an abbreviated name such
-  as `dbPass` cannot be told apart from an ordinary word. Only this sanitized form is kept, validated, used in a repair prompt
+  define, and fields the engine sets itself, are then dropped at every depth (their number is
+  recorded), because an abbreviated name such as `dbPass` cannot be told apart from an ordinary word. Only this sanitized form is kept, validated, used in a repair prompt
   or shown. Text outside the JSON object (reasoning, prose, code fences) is not kept; its length is.
 - An answer that cannot be parsed (malformed, truncated, not an object, nested too deeply, or
   containing unpaired surrogate escapes) cannot be sanitized
@@ -213,7 +220,7 @@ See [docs/architecture.md](docs/architecture.md) for every rule and where it com
 pytest
 ```
 
-221 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
+227 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
 the boundary between answers and checks (engine-set fields ignored, mocked Ollama including
 repair, cut-off and locality cases), exchange bindings (changed evidence, changed earlier
 answers), decision protection, secret handling at every input and output, answer vocabulary,
@@ -236,9 +243,10 @@ Behavior is verified with fictional fixtures, scripted answers and mocked model 
 - Small local models may fail the JSON schemas or the confidence vocabulary; one repair attempt
   is made, then the run stops. Every attempt is kept, sanitized, under `raw/`; an unparseable
   answer's text is not kept.
-- Masking uses the engine's patterns and credential-like key names. A secret in a format they do
-  not recognize, written as ordinary text under an ordinary field (for example a word-only
-  password inside a finding), is not masked.
+- Masking cannot catch every secret. It uses the engine's patterns and credential-like key names;
+  a secret in a format they do not recognize, written as ordinary text under an ordinary field (for
+  example a word-only password inside a finding), and any personal or confidential information that
+  is not credential-shaped, is not masked. Review inputs before running and outputs before sharing.
 
 ## Relationship to the book
 

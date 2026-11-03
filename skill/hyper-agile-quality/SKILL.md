@@ -52,7 +52,10 @@ releases/<version>.yaml   release record: work items, validation runs, approval 
 production-learning.md    detection, impact, timeline after release
 ```
 
-Use only evidence the user is allowed to share with the chosen answer source. Copy text
+Tell the user that masking cannot catch every secret: credential-like values are masked, but
+anything in an unrecognized format, and confidential or personal information, passes through
+unchanged. They must review the evidence before it is processed and every output before it is
+shared. Use only evidence the user is allowed to share with the chosen answer source. Copy text
 exactly; do not summarize evidence into the folder, because quotes are checked against it.
 If you export from a connected tool, use read operations only and say which tool and query
 produced each file. Record people by role, not by name.

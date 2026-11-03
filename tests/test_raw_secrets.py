@@ -279,3 +279,36 @@ def test_pruning_keeps_every_schema_field_of_the_demo_answers():
     for step in STEPS:
         kept, dropped = prune(sanitize(ANSWERS[step.key]), step.output)
         assert dropped == 0 and kept == ANSWERS[step.key], step.key
+
+
+# ------------------------------------------------------------------ fourth independent review
+
+
+def test_engine_set_fields_are_never_kept_from_an_answer(tmp_path):
+    """Free-form engine-set dicts could not be filtered by key, so engine-set fields are dropped from answers."""
+    planted = "Hunter-" + "two-xyzzy-synthetic"
+    r = json.loads(json.dumps(ANSWERS))
+    r["2-validation"]["presented_test_inventory"] = {"dbPass": planted}                      # top-level dict field
+    r["2-validation"]["regression_selection_gap"] = "SUPPORTED"                             # top-level str field
+    r["2-validation"]["test_relevance"][0]["classification"] = "DETECTING " + planted       # nested model field
+    r["1-trace"]["links"][0]["verified_support"] = planted                                   # nested model field
+    r["3-hypotheses"]["hypotheses"][0]["quote_checks"] = [{"dbPass": planted}]               # list[dict] field
+    r["3-hypotheses"]["what_worked"][0]["quote_checks"] = [{"dbPass": planted}]
+    out = tmp_path / "out"
+    inv = run_investigation(DEMO_CASE, scripted(tmp_path, r), out_dir=out)
+    write_outputs(inv, out)
+    assert planted not in tree(out)
+    assert inv.validation.presented_test_inventory == {"status": "unknown", "reason": "No saved actual admission inventory."}
+    assert inv.validation.regression_selection_gap == "UNCERTAIN"                            # derived, as before
+    record = json.loads((out / "raw" / "2-validation.attempt-1.json").read_text())
+    assert "presented_test_inventory" not in record["answer"] and record["keys_not_kept"].startswith("3 key(s)")
+
+
+def test_valid_answers_give_the_same_checked_result_after_pruning(baseline):
+    """The demo answers carry no engine-set fields; pruning must not change their checked outcome."""
+    from haq.sanitize import prune
+    from haq.prompts import STEPS
+
+    for step in STEPS:
+        assert prune(ANSWERS[step.key], step.output)[1] == 0
+    assert {h.id: h.check_status for h in baseline.hypotheses.hypotheses}["H1"] == "SUPPORTED"
