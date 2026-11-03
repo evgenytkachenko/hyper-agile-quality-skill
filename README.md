@@ -122,8 +122,13 @@ Each attempt is kept as `raw/<step>.attempt-<n>.json`, written before the answer
   auth, credential, cookie, session ID, connection string, DSN, ...) is replaced. Key names are matched in
   any casing and with `_`, `-`, `.` or space separators. Keys the step's answer schema does not
   define, and fields the engine sets itself, are then dropped at every depth (their number is
-  recorded), because an abbreviated name such as `dbPass` cannot be told apart from an ordinary word. Only this sanitized form is kept, validated, used in a repair prompt
-  or shown. Text outside the JSON object (reasoning, prose, code fences) is not kept; its length is.
+  recorded), because an abbreviated name such as `dbPass` cannot be told apart from an ordinary word. Only this sanitized form is kept, validated or shown; a repair
+  prompt carries only the locations and messages of the problems, never answer content. Text outside the JSON object (reasoning, prose, code fences) is not kept; its length is.
+- The answer is then conformed to the step's schema shape at every depth. A value of the wrong
+  shape — an object or list where text is expected, a list of lists, text where an object or list is
+  expected — has its content replaced by an `[OMITTED: expected ..., got ...]` marker, whatever its
+  key names, and the answer is rejected (a model gets one repair request naming only the locations
+  and shapes). This does not depend on recognizing credential names.
 - An answer that cannot be parsed (malformed, truncated, not an object, nested too deeply, or
   containing unpaired surrogate escapes) cannot be sanitized
   safely, so its text is not kept or shown anywhere. The record holds only its length and the
@@ -220,7 +225,7 @@ See [docs/architecture.md](docs/architecture.md) for every rule and where it com
 pytest
 ```
 
-227 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
+271 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
 the boundary between answers and checks (engine-set fields ignored, mocked Ollama including
 repair, cut-off and locality cases), exchange bindings (changed evidence, changed earlier
 answers), decision protection, secret handling at every input and output, answer vocabulary,

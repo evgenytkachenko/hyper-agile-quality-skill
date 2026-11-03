@@ -72,7 +72,7 @@ def test_credential_shaped_key_is_masked():
 def test_text_outside_the_object_is_dropped_and_counted():
     raw = f"<think>the password is {PASSWORD}</think> Sure! token {TOKEN}\n```json\n{{\"a\": 1}}\n```"
     clean, record = intake(raw)
-    assert clean == {"a": 1} and "outside the JSON object" in record["omitted"] and not leaks(json.dumps(record))
+    assert clean == {"a": 1} and "outside the JSON object" in record["outside_object"] and not leaks(json.dumps(record))
 
 
 @pytest.mark.parametrize("raw", [
@@ -122,11 +122,11 @@ def test_validation_error_message_has_no_input(tmp_path):
     responses = dict(ANSWERS, **{"2-validation": json.dumps({"activities": PASSWORD + " " + TOKEN})})
     with pytest.raises(PassOutputError) as err:
         run_investigation(DEMO_CASE, scripted(tmp_path, responses), out_dir=tmp_path / "o")
-    assert not leaks(str(err.value)) and "activities" in str(err.value)
-    # The attempt keeps the sanitized answer: the token is masked; a digit-free password written as ordinary text
-    # under an ordinary field is not recognizable and stays (documented limitation), but is never echoed in errors.
+    assert not leaks(str(err.value)) and "activities: expected a list, got text" in str(err.value)
+    # Text where a list is expected is the wrong shape: its whole content is omitted, including the digit-free
+    # password that no pattern recognizes.
     kept = tree(tmp_path / "o")
-    assert TOKEN not in kept and "[REDACTED]" in kept
+    assert not leaks(kept) and "[OMITTED: expected a list, got text]" in kept
 
 
 def test_truncated_saved_answer_is_reported_without_content(tmp_path):

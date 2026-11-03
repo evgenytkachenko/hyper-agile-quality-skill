@@ -51,7 +51,7 @@ class Investigation:
     attempt_files: dict[str, list[str]] = field(default_factory=dict)
     accepted: dict[str, str] = field(default_factory=dict)
     bindings: dict[str, str] = field(default_factory=dict)
-    unparseable: dict[str, list[str]] = field(default_factory=dict)
+    rejections: dict[str, str] = field(default_factory=dict)
 
     @property
     def trace(self):
@@ -68,8 +68,11 @@ class Investigation:
 
 def _record_attempt(inv: "Investigation", raw_dir: Path | None, step: str, raw: str,
                     model: type[BaseModel] | None = None) -> dict | None:
-    """Sanitize an answer (see sanitize.py) and keep the attempt record, before it is validated. Returns the
-    sanitized object, or None when the answer could not be parsed; its text is then neither kept nor shown."""
+    """Sanitize and conform an answer (see sanitize.py) and keep the attempt record, before it is validated.
+
+    Returns the sanitized object, or None when the answer cannot be used: when it could not be parsed (its text is
+    neither kept nor shown) or when values have the wrong shape for the schema (their content is not kept). Why is
+    kept in inv.rejections[step] as locations and reasons only."""
     clean, record = intake(raw, model)
     text = json.dumps({"step": step, **record}, indent=1, ensure_ascii=False) + "\n"
     inv.attempts.setdefault(step, []).append(hashlib.sha256(text.encode("utf-8")).hexdigest())
@@ -80,7 +83,14 @@ def _record_attempt(inv: "Investigation", raw_dir: Path | None, step: str, raw: 
         (raw_dir / f"{step}.attempt-{n}.json").write_text(text, encoding="utf-8")
         inv.attempt_files.setdefault(step, []).append(f"raw/{step}.attempt-{n}.json")
     if clean is None:
-        inv.unparseable.setdefault(step, []).append(record["reason"])
+        inv.rejections[step] = f"could not be parsed ({record['reason']}); its text is not shown."
+        return None
+    if record["status"] == "wrong_shape":
+        # The wrong-shape content is already gone from the record. The answer is still rejected, never validated,
+        # because a marker could otherwise stand in for a missing value.
+        inv.rejections[step] = (f"has values of the wrong shape ({'; '.join(record['shape_problems'])}); their content "
+                                "is not shown.")
+        return None
     return clean
 
 
@@ -88,7 +98,7 @@ def _parse(clean: dict | None, step: str, inv: "Investigation", output: type[Bas
            levels: list[str]) -> BaseModel:
     """Sanitized answer -> validated model. Raises ValueError/ValidationError; describe() keeps inputs out."""
     if clean is None:
-        raise ValueError(f"the answer could not be parsed ({inv.unparseable[step][-1]}); its text is not shown.")
+        raise ValueError(f"the answer {inv.rejections[step]}")
     value = output.model_validate(clean)
     problems = answer_problems(value, levels)
     if problems:
