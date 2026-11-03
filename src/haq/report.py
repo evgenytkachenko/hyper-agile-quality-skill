@@ -222,16 +222,19 @@ def render_report(inv) -> str:
 
 
 def decisions_template(inv, result_sha256: str) -> str:
+    """Comments, then the data written by a YAML serializer, so no ID or case name can break or merge entries."""
+    import yaml
+
     hyp = inv.hypotheses
-    lines = ["# Human decisions for this investigation. Nothing here is filled in by the tool.",
-             "# For each item set decision to one of: accept, reject, investigate. Add who decided (a role) and why.",
-             "# These decisions apply only to the result named by result_sha256. If the evidence or the answers change,",
-             "# the result changes and `haq check-decisions` reports these decisions as not applying to it.",
-             f"case: {inv.case.bundle.case_id}", f"result_sha256: {result_sha256}", "hypotheses:"]
-    for h in hyp.hypotheses:
-        lines += [f"  {h.id}:", f"    checked_status: {h.check_status}", "    decision: null", "    decided_by_role: null",
-                  "    reason: null"]
-    lines.append("proposals:")
-    for p in (*hyp.proposed_regression_tests, *hyp.proposed_controls):
-        lines += [f"  {p.id}:", "    decision: null", "    decided_by_role: null", "    reason: null"]
-    return "\n".join(lines) + "\n"
+    empty = {"decision": None, "decided_by_role": None, "reason": None}
+    data = {
+        "case": inv.case.bundle.case_id,
+        "result_sha256": result_sha256,
+        "hypotheses": {h.id: {"checked_status": h.check_status, **empty} for h in hyp.hypotheses},
+        "proposals": {p.id: dict(empty) for p in (*hyp.proposed_regression_tests, *hyp.proposed_controls)},
+    }
+    header = ["# Human decisions for this investigation. Nothing here is filled in by the tool.",
+              "# For each item set decision to one of: accept, reject, investigate. Add who decided (a role) and why.",
+              "# These decisions apply only to the result named by result_sha256. If the evidence or the answers change,",
+              "# the result changes and `haq check-decisions` reports these decisions as not applying to it."]
+    return "\n".join(header) + "\n" + yaml.safe_dump(data, sort_keys=False, allow_unicode=False, width=120)

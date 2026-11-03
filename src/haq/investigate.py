@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import shutil
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -175,8 +176,18 @@ def run_investigation(case_dir: Path, provider: ModelProvider, *, variant_dir: P
 # ------------------------------------------------------------------ outputs and human decisions
 
 MARKER = "haq-output.json"
+PREVIOUS = "previous-run"
 GENERATED = ("report.md", "results.json", "checks.json", "run.json")
 DECISIONS = "decisions.yaml"
+
+
+def is_digest(value: object) -> bool:
+    return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+
+
+def short_digest(value: object) -> str:
+    """For messages: a value read from someone's file is shown only if it is a digest."""
+    return f"{value[:12]}…" if is_digest(value) else "(not a digest)"
 
 
 def _sha(path: Path) -> str:
@@ -212,14 +223,17 @@ def decisions_state(out_dir: Path) -> str:
 def _archive_decisions(out_dir: Path) -> Path:
     path = out_dir / DECISIONS
     try:
-        bound = str((yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("result_sha256") or "")[:12]
+        bound = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("result_sha256")
     except (OSError, yaml.YAMLError, AttributeError):
-        bound = ""
-    stem = f"decisions.superseded-{bound or 'unbound'}"
+        bound = None
+    # The name comes from a file a person wrote: use it only if it is a digest, so it cannot form a path.
+    stem = f"decisions.superseded-{bound[:12] if is_digest(bound) else 'unbound'}"
     n, target = 1, out_dir / f"{stem}.yaml"
-    while target.exists():
+    while target.exists() or target.is_symlink():
         n += 1
         target = out_dir / f"{stem}-{n}.yaml"
+    if target.parent.resolve() != out_dir.resolve():
+        raise HyperAgileError("Refusing to archive decisions outside the output folder.")
     path.rename(target)
     return target
 
@@ -251,12 +265,16 @@ def prepare_out_dir(out_dir: Path, overwrite: bool, archive_decisions: bool = Fa
         if state == "edited":
             notes.append(f"Kept the earlier decisions as {_archive_decisions(out_dir).name}.")
         if finished:
-            for name in GENERATED:
-                (out_dir / name).unlink(missing_ok=True)
-            if state == "untouched":
-                (out_dir / DECISIONS).unlink()
-            for old in (out_dir / "raw").glob("*.attempt-*.txt") if (out_dir / "raw").is_dir() else ():
-                old.unlink()
+            # Keep the previous result until the new one is written (write_outputs removes it); if this run
+            # fails, it stays in previous-run/ and nothing is lost.
+            previous = out_dir / PREVIOUS
+            if previous.exists():
+                shutil.rmtree(previous)
+            previous.mkdir()
+            for name in (*GENERATED, *((DECISIONS,) if state == "untouched" else ()), "raw"):
+                if (out_dir / name).exists():
+                    (out_dir / name).rename(previous / name)
+            notes.append(f"The previous result was moved to {previous}; it is removed when this run finishes.")
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / MARKER).write_text(json.dumps({"tool": "hyper-agile-quality-skill", "version": __version__}) + "\n",
                                   encoding="utf-8")
@@ -300,6 +318,8 @@ def write_outputs(inv: Investigation, out_dir: Path) -> dict[str, Path]:
         "decisions_template_sha256": hashlib.sha256(template.encode()).hexdigest(),
         "warnings": inv.warnings,
     }, indent=1) + "\n", encoding="utf-8")
+    if (out_dir / PREVIOUS).is_dir() and (out_dir / MARKER).is_file():
+        shutil.rmtree(out_dir / PREVIOUS)
     return paths
 
 
@@ -315,9 +335,9 @@ def check_decisions(out_dir: Path) -> tuple[bool, list[str]]:
     lines, ok = [], True
     if not isinstance(data, dict) or data.get("result_sha256") != run.get("result_sha256"):
         ok = False
-        lines.append(f"{DECISIONS} is not bound to this result (it names "
-                     f"{str((data or {}).get('result_sha256') if isinstance(data, dict) else None)[:12]}…, the result is "
-                     f"{str(run.get('result_sha256'))[:12]}…). Its decisions do not apply to this report.")
+        named = data.get("result_sha256") if isinstance(data, dict) else None
+        lines.append(f"{DECISIONS} is not bound to this result (it names {short_digest(named)}, the result is "
+                     f"{short_digest(run.get('result_sha256'))}). Its decisions do not apply to this report.")
     items = {**(data.get("hypotheses") or {}), **(data.get("proposals") or {})} if isinstance(data, dict) else {}
     decided = {k: v.get("decision") for k, v in items.items() if isinstance(v, dict) and v.get("decision")}
     lines.append(f"{len(decided)} of {len(items)} item(s) decided" + (": " + ", ".join(f"{k}={v}" for k, v in decided.items()) if decided else "."))

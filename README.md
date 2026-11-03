@@ -79,13 +79,17 @@ Each run writes `report.md`, `results.json` (answers as given and after checks),
 `checks.json` (every rule that changed something), `run.json` (provenance and file hashes)
 and `decisions.yaml` (empty, for a person to fill in, bound to this exact result), plus `raw/`
 with every answer attempt as received (masked), including attempts that failed validation.
+Attempts from earlier invocations of an unfinished run are kept too; `run.json` lists the
+attempts of the invocation that finished. An exchange answer refused for its binding is not
+copied to `raw/`; it stays, unchanged, in the answers folder.
 
 ## Output folders and human decisions
 
 - A new or empty `--out` folder is used and marked as a haq output folder. Other non-empty folders are refused.
 - An unfinished run (for example a step-by-step agent exchange) can be continued in the same folder.
 - A finished run is replaced only with `--overwrite`, which replaces the report, results, checks, run record
-  and raw attempts. It never overwrites `decisions.yaml`.
+  and raw attempts. It never overwrites `decisions.yaml`. The previous result is moved to `previous-run/`
+  and removed only once the new run has written its result, so a failed run loses nothing.
 - If `decisions.yaml` differs from the template the tool wrote, the run is refused and nothing is changed.
   `--archive-decisions` renames it to `decisions.superseded-<result>.yaml` and starts a fresh one.
 - `decisions.yaml` names the `result_sha256` it reviews. `haq check-decisions <out>` fails when the
@@ -135,8 +139,11 @@ No live service was contacted in developing or testing this project. Credential-
 in free text (titles, descriptions, comments, notes, test messages and all answers) are masked
 with the engine's rules before they reach a model, an output file or a message. Identifiers
 (file paths, case and variant IDs, issue keys, link fields, release versions) that look like
-credentials are refused instead, because a masked identifier could collide with another. Every
-evidence ID and file name must be unique, case aside. See
+credentials, or contain non-ASCII or control characters, are refused instead, because a masked
+or look-alike identifier could collide with another. Every evidence ID and file name must be
+unique, case aside. Hypothesis and proposal IDs must be short ASCII names (`H1`, `T2`) and
+unique, case aside. An unexpected internal error prints only its type, never its message or a
+traceback, because either may quote evidence (`HAQ_DEBUG=1` shows the traceback). See
 [docs/connectors.md](docs/connectors.md).
 
 ## Local model configuration
@@ -177,7 +184,7 @@ See [docs/architecture.md](docs/architecture.md) for every rule and where it com
 pytest
 ```
 
-101 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
+113 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
 the boundary between answers and checks (engine-set fields ignored, mocked Ollama including
 repair, cut-off and locality cases), exchange bindings (changed evidence, changed earlier
 answers), decision protection, secret handling at every input and output, answer vocabulary,

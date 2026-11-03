@@ -123,7 +123,10 @@ def test_duplicate_hypothesis_ids_are_rejected():
     (lambda d: d["3-hypotheses"]["proposed_controls"][0].update(id="T1"), "proposal ID 'T1' is used 2 times"),
     (lambda d: d["3-hypotheses"]["proposed_regression_tests"][1].update(id="T1"), "proposal ID 'T1' is used 2 times"),
     (lambda d: d["3-hypotheses"]["proposed_controls"][0].update(id="H1"), "both a hypothesis and a proposal"),
-    (lambda d: d["3-hypotheses"]["hypotheses"][1].update(id=" "), "empty ID"),
+    (lambda d: d["3-hypotheses"]["hypotheses"][1].update(id=" "), "must be a letter followed by"),
+    (lambda d: d["3-hypotheses"]["hypotheses"][1].update(id='"H1"'), "must be a letter followed by"),
+    (lambda d: d["3-hypotheses"]["hypotheses"][1].update(id="H1 #dup"), "must be a letter followed by"),
+    (lambda d: d["3-hypotheses"]["hypotheses"][1].update(id="h1"), "hypothesis ID 'H1' is used 2 times"),
 ])
 def test_duplicate_or_empty_ids_are_rejected(tmp_path, mutate, message):
     with pytest.raises(PassOutputError, match=message):
@@ -228,3 +231,27 @@ def test_masking_does_not_break_a_valid_answer(tmp_path):
         d["1-trace"]["production_problem"] += f" key={token}"
     inv = run_investigation(DEMO_CASE, scripted(tmp_path, mutate))
     assert token not in inv.trace.production_problem and "[REDACTED]" in inv.trace.production_problem
+
+
+# ------------------------------------------------------------------ independent review findings
+
+
+def test_non_ascii_lookalike_identity_is_refused(tmp_path):
+    """'ſ' (U+017F) matches 's' case-insensitively, so it could make one citation name two issues."""
+    case = copy(tmp_path)
+    (case / "issues" / "OTHER.yaml").write_text("key: ſHOP-482\ntitle: lookalike\n", encoding="utf-8")
+    with pytest.raises(EvidenceError, match="non-ASCII"):
+        load_evidence(case)
+
+
+def test_decisions_file_stays_valid_yaml_for_any_accepted_case_id(tmp_path):
+    import yaml
+
+    from haq.investigate import write_outputs
+
+    case = copy(tmp_path)
+    (case / "case.yaml").write_text("id: 'odd: name #1'\ntitle: t\nincident: SHOP-482\n", encoding="utf-8")
+    inv = run_investigation(case, ScriptedProvider(DEMO_RESPONSES))
+    write_outputs(inv, tmp_path / "out")
+    data = yaml.safe_load((tmp_path / "out" / "decisions.yaml").read_text())
+    assert data["case"] == "odd: name #1" and len(data["hypotheses"]) == 7 and len(data["proposals"]) == 7

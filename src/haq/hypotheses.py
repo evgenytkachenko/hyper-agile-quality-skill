@@ -267,6 +267,9 @@ def check_investigation(inv: QualityInvestigation, bundle: EvidenceBundle, level
 
 ROOT_CAUSE = re.compile(r"\broot[- ]cause\b", re.I)
 
+# Hypothesis and proposal IDs: decisions.yaml, comparisons and proposals refer to items by them.
+ITEM_ID = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,31}")
+
 # Activity statuses the methodology allows in addition to the confidence levels.
 ACTIVITY_EXTRA = ("NOT APPLICABLE", guards.ACTIVITY_UNKNOWN)
 
@@ -296,18 +299,19 @@ def answer_problems(value: BaseModel, levels: list[str]) -> list[str]:
         for n, test in enumerate(value.test_relevance, start=1):
             check(f"test_relevance[{n}].confidence", test.confidence, allowed)
     elif isinstance(value, QualityInvestigation):
-        seen: dict[str, int] = {}
         for n, h in enumerate(value.hypotheses, start=1):
             check(f"hypotheses[{n}] ({h.id}).confidence", h.confidence, allowed)
-            seen[h.id.strip()] = seen.get(h.id.strip(), 0) + 1
-        ids = [p.id.strip() for p in (*value.proposed_regression_tests, *value.proposed_controls)]
-        for kind, counts in (("hypothesis", seen), ("proposal", {i: ids.count(i) for i in ids})):
-            for item, count in counts.items():
-                if not item:
-                    problems.append(f"a {kind} has an empty ID")
-                elif count > 1:
-                    problems.append(f"{kind} ID '{item}' is used {count} times")
-        overlap = set(seen) & set(ids)
+        groups = (("hypothesis", [h.id for h in value.hypotheses]),
+                  ("proposal", [p.id for p in (*value.proposed_regression_tests, *value.proposed_controls)]))
+        for kind, ids in groups:
+            for item in ids:
+                if not ITEM_ID.fullmatch(item):
+                    problems.append(f"{kind} ID {item!r} must be a letter followed by letters, digits, '_' or '-'")
+            folded = [i.casefold() for i in ids]
+            for item in dict.fromkeys(ids):
+                if folded.count(item.casefold()) > 1 and ids.index(item) == folded.index(item.casefold()):
+                    problems.append(f"{kind} ID '{item}' is used {folded.count(item.casefold())} times (case aside)")
+        overlap = {i.casefold() for i in groups[0][1]} & {i.casefold() for i in groups[1][1]}
         if overlap:
             problems.append(f"IDs used for both a hypothesis and a proposal: {', '.join(sorted(overlap))}")
     return problems

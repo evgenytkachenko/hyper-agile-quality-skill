@@ -157,3 +157,41 @@ def test_rejected_answer_messages_and_attempts_are_masked(tmp_path):
         run_investigation(DEMO_CASE, ScriptedProvider(path), out_dir=out)
     assert TOKEN not in str(err.value)
     assert (out / "raw" / "2-validation.attempt-1.txt").is_file() and TOKEN not in all_text(out)
+
+
+# ------------------------------------------------------------------ independent review findings
+
+
+def test_malformed_variant_manifest_leaks_nothing(tmp_path):
+    variant = tmp_path / "v"
+    variant.mkdir()
+    (variant / "variant.yaml").write_text(f'remove: ["{TOKEN}\n', encoding="utf-8")
+    env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+    r = subprocess.run([sys.executable, "-m", "haq", "check-case", str(DEMO_CASE), "--variant", str(variant)],
+                       capture_output=True, text=True, env=env, timeout=120)
+    out = r.stdout + r.stderr
+    assert r.returncode == 2 and "not readable YAML" in out and "Traceback" not in out
+    assert TOKEN[:12] not in out
+
+
+def test_unexpected_errors_print_no_message_or_traceback(monkeypatch, capsys):
+    from haq import cli
+
+    def boom(args):
+        raise RuntimeError(f"evidence line with {TOKEN}")
+    monkeypatch.delenv("HAQ_DEBUG", raising=False)
+    monkeypatch.setattr(cli, "cmd_doctor", boom)
+    assert cli.main(["doctor"]) == 1
+    err = capsys.readouterr().err
+    assert "unexpected RuntimeError" in err and TOKEN[:8] not in err
+
+
+def test_stale_binding_message_never_echoes_a_non_digest(tmp_path):
+    from haq.providers import StaleAnswer
+
+    folder = tmp_path / "x"
+    folder.mkdir()
+    (folder / "1-trace.answer.json").write_text(json.dumps({"binding": TOKEN, "answer": {}}), encoding="utf-8")
+    with pytest.raises(StaleAnswer) as err:
+        run_investigation(DEMO_CASE, ExchangeProvider(folder))
+    assert TOKEN[:12] not in str(err.value) and "(not a digest)" in str(err.value)

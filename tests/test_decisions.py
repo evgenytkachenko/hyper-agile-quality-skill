@@ -112,3 +112,55 @@ def test_decisions_without_a_run_record_are_treated_as_edited(tmp_path):
     (out / "run.json").unlink()
     r = haq("demo", "--out", str(out), "--overwrite")
     assert r.returncode == 2 and "may contain a person's decisions" in r.stderr
+
+
+# ------------------------------------------------------------------ independent review findings
+
+
+def test_archive_name_cannot_be_steered_by_the_file(tmp_path):
+    out = tmp_path / "a"
+    haq("demo", "--out", str(out))
+    text = (out / "decisions.yaml").read_text()
+    digest = json.loads((out / "run.json").read_text())["result_sha256"]
+    (out / "decisions.yaml").write_text(text.replace(digest, "x/../../escaped"))
+    (out / "decisions.superseded-x").mkdir()
+    r = haq("demo", "--out", str(out), "--overwrite", "--archive-decisions")
+    assert r.returncode == 0, r.stderr
+    archived = out / "decisions.superseded-unbound.yaml"
+    assert archived.is_file() and "x/../../escaped" in archived.read_text()
+    assert not (tmp_path / "escaped").exists() and not list(tmp_path.glob("*.yaml"))
+
+
+def test_check_decisions_does_not_echo_non_digest_values(tmp_path):
+    out = tmp_path / "a"
+    haq("demo", "--out", str(out))
+    text = (out / "decisions.yaml").read_text()
+    digest = json.loads((out / "run.json").read_text())["result_sha256"]
+    (out / "decisions.yaml").write_text(text.replace(digest, "ghp_" + "Zx9" * 12))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "(not a digest)" in r.stdout and "ghp_Zx9" not in r.stdout
+
+
+def test_failed_overwrite_keeps_the_previous_result(tmp_path):
+    out, bad = tmp_path / "a", tmp_path / "bad.json"
+    haq("demo", "--out", str(out))
+    report = (out / "report.md").read_text()
+    data = json.loads(DEMO_RESPONSES.read_text())
+    data["responses"]["2-validation"] = "not an object"
+    bad.write_text(json.dumps(data))
+    r = haq("investigate", str(DEMO_CASE), "--out", str(out), "--scripted", str(bad), "--overwrite")
+    assert r.returncode == 2
+    assert (out / "previous-run" / "report.md").read_text() == report
+    assert (out / "previous-run" / "decisions.yaml").is_file()
+    r = haq("demo", "--out", str(out))          # the folder is unfinished now, so it can be reused
+    assert r.returncode == 0, r.stderr
+    assert not (out / "previous-run").exists() and (out / "report.md").read_text() == report
+
+
+def test_successful_overwrite_removes_the_previous_result(tmp_path):
+    out = tmp_path / "a"
+    haq("demo", "--out", str(out))
+    assert haq("demo", "--variant", "missing-evidence", "--out", str(out), "--overwrite").returncode == 0
+    assert not (out / "previous-run").exists()
+    assert sorted(p.name for p in (out / "raw").iterdir()) == [
+        "1-trace.attempt-1.txt", "2-validation.attempt-1.txt", "3-hypotheses.attempt-1.txt"]

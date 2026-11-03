@@ -82,7 +82,8 @@ A folder with `variant.yaml` (`remove: [paths]`) plus replacement files, applied
 
 Credential-like strings in free text are masked with the engine's patterns before anything is
 shown to a model or written. Identifiers — file paths, case and variant IDs, issue keys, link
-targets and relations, release versions — that look like credentials are refused with a message
+targets and relations, release versions — that look like credentials, or that contain non-ASCII
+or control characters, are refused with a message
 that shows only the masked form, because masking them could make two citations identical. Every
 evidence ID and file name must name exactly one artifact (case aside): repeated basenames in
 different folders, or the same issue key in two files, are refused. Files over 2 MiB are refused; artifacts over 20,000 characters are

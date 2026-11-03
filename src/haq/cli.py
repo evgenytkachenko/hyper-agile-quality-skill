@@ -256,6 +256,12 @@ def main(argv: list[str] | None = None) -> int:
     except HyperAgileError as exc:
         print(f"Error: {mask_text(str(exc))}", file=sys.stderr)
         return 2
+    except Exception as exc:  # noqa: BLE001 - an unexpected error must not print evidence text or a traceback
+        if os.environ.get("HAQ_DEBUG") == "1":
+            raise
+        print(f"Error: unexpected {type(exc).__name__}. Its message is not shown because it may quote evidence; "
+              "set HAQ_DEBUG=1 to see the full traceback (it may contain evidence text).", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

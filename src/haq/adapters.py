@@ -75,6 +75,10 @@ def check_identifier(kind: str, value: str) -> str:
 
     Masking one would leave a reference that can collide with another masked one, so a credential-like
     identifier is refused instead. The message shows only the masked form."""
+    if not value.isascii() or not value.isprintable():
+        raise EvidenceError(
+            f"The {kind} {ascii(mask_text(value))} contains non-ASCII or control characters. Identifiers are matched "
+            "case-insensitively, and some non-ASCII letters match ASCII ones; use plain ASCII names.")
     if mask_text(value) != value:
         raise EvidenceError(
             f"The {kind} '{mask_text(value)}' contains a credential-like value. Identifiers are used as citations "
@@ -101,7 +105,10 @@ def _read_tree(root: Path) -> dict[str, bytes]:
 def apply_variant(files: dict[str, bytes], variant_dir: Path) -> dict[str, bytes]:
     """Return a new file map with the variant's removals and replacements applied."""
     overlay = _read_tree(variant_dir)
-    manifest = yaml.safe_load(overlay.pop(VARIANT_MANIFEST, b"") or b"") or {}
+    raw = overlay.pop(VARIANT_MANIFEST, b"")
+    manifest = _yaml(VARIANT_MANIFEST, raw) if raw.strip() else {}
+    if not isinstance(manifest.get("remove", []) or [], list):
+        raise EvidenceError(f"{VARIANT_MANIFEST}: 'remove' must be a list of paths.")
     out = dict(files)
     for rel in manifest.get("remove", []) or []:
         if rel not in out:
@@ -324,7 +331,7 @@ def load_evidence(case_dir: Path, variant_dir: Path | None = None,
     # either, so a repeated basename or issue key would let one citation stand for two different files.
     owners: dict[str, list[EvidenceArtifact]] = {}
     for a in bundle.artifacts():
-        for identity in {a.ref.lower(), a.name.lower()}:
+        for identity in {a.ref.casefold(), a.name.casefold()}:
             owners.setdefault(identity, []).append(a)
     ambiguous = {k: sorted(x.source_path for x in v) for k, v in owners.items() if len(v) > 1}
     if ambiguous:

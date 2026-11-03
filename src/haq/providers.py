@@ -79,6 +79,12 @@ def request_binding(step: str, system_prompt: str, user_prompt: str, json_schema
     return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
+def short(value: object) -> str:
+    """A value from an answer file is shown only if it is a digest; anything else could be a credential."""
+    return f"{value[:12]}…" if isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value) \
+        else "(not a digest)"
+
+
 class ExchangeProvider(ModelProvider):
     """File exchange with an agent, one step at a time.
 
@@ -130,7 +136,7 @@ class ExchangeProvider(ModelProvider):
                               "request it answers is not used.")
         if saved["binding"] != binding:
             raise StaleAnswer(
-                f"{answer} was written for a different request (binding {str(saved['binding'])[:12]}…, current "
+                f"{answer} was written for a different request (binding {short(saved['binding'])}, current "
                 f"{binding[:12]}…): the evidence, prompt, schema or an earlier step's answer has changed. Move or "
                 f"delete it (answers for later steps will be stale too) and answer the new prompt in {prompt}.")
         self.bindings[step] = binding
