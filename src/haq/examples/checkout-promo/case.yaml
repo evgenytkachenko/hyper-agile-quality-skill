@@ -1,0 +1,5 @@
+# FICTIONAL CASE. "Example Shop", its people, issue keys, code and numbers are invented
+# for demonstration. Any resemblance to a real system or incident is coincidental.
+id: checkout-promo
+title: Promo discount applied twice after a cart quantity change
+incident: SHOP-482

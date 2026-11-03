@@ -1,0 +1,1289 @@
+{
+ "checked": {
+  "1-trace": {
+   "production_problem": "After applying a percentage promo code on the cart page, changing an item quantity reduced the order total a second time (19% off instead of 10% for SPRING10). 37 orders were affected between 2026-03-10 and 2026-03-14. It was detected by the finance team's daily discount reconciliation, not by customers [issue:SHOP-482] [production-learning.md].",
+   "links": [
+    {
+     "from_item": "SHOP-482",
+     "to_item": "SHOP-455",
+     "source_artifact": "issue:SHOP-482",
+     "target_artifact": "issue:SHOP-455",
+     "relationship_type": "is caused by",
+     "direct_or_inferred": "INFERRED",
+     "evidence_quote": "is caused by: SHOP-455",
+     "confidence": "STRONGLY SUPPORTED",
+     "basis": "The production issue records an 'is caused by' link to SHOP-455.",
+     "unresolved_citations": [],
+     "verified_support": "issue:SHOP-482, issue:SHOP-455"
+    },
+    {
+     "from_item": "SHOP-455",
+     "to_item": "PR #318",
+     "source_artifact": "issue:SHOP-455",
+     "target_artifact": "code-change.md",
+     "relationship_type": "implemented by",
+     "direct_or_inferred": "DIRECT",
+     "evidence_quote": "SHOP-455 apply promo codes on the cart page",
+     "confidence": "CONFIRMED",
+     "basis": "The pull request title names SHOP-455, and the story comment says it was merged in PR #318.",
+     "unresolved_citations": [],
+     "verified_support": "issue:SHOP-455 records PR #318"
+    },
+    {
+     "from_item": "PR #318",
+     "to_item": "junit:ci-unit",
+     "source_artifact": "code-change.md",
+     "target_artifact": "",
+     "relationship_type": "validated by",
+     "direct_or_inferred": "INFERRED",
+     "evidence_quote": "4f2c1a9e",
+     "confidence": "STRONGLY SUPPORTED",
+     "basis": "The CI results and the pull request show the same commit 4f2c1a9e.",
+     "unresolved_citations": [
+      "target_artifact: junit:ci-unit"
+     ],
+     "verified_support": "code-change.md"
+    },
+    {
+     "from_item": "PR #318",
+     "to_item": "TC-210",
+     "source_artifact": "code-change.md",
+     "target_artifact": "",
+     "relationship_type": "tested by",
+     "direct_or_inferred": "INFERRED",
+     "evidence_quote": "",
+     "confidence": "POSSIBLE CONTRIBUTING FACTOR",
+     "basis": "Same feature area; TC-210 is automated as test_promo_applies_percentage, which the pull request adds.",
+     "unresolved_citations": [
+      "target_artifact: tests.md"
+     ],
+     "verified_support": "code-change.md"
+    },
+    {
+     "from_item": "SHOP-455",
+     "to_item": "Release 4.2.0",
+     "source_artifact": "issue:SHOP-455",
+     "target_artifact": "release:4.2.0",
+     "relationship_type": "released in",
+     "direct_or_inferred": "DIRECT",
+     "evidence_quote": "Work items: SHOP-455, SHOP-460",
+     "confidence": "CONFIRMED",
+     "basis": "The release record lists SHOP-455 as a work item.",
+     "unresolved_citations": [],
+     "verified_support": "issue:SHOP-455 records Release 4.2.0"
+    }
+   ],
+   "timeline": [
+    {
+     "when": "2026-01-15",
+     "event": "Pricing rules document says percentage discounts are calculated from the undiscounted subtotal.",
+     "source": "documentation.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-02-26T14:20:00Z",
+     "event": "QA engineer asks on SHOP-455 what happens to the discount when a quantity changes after a code is applied.",
+     "source": "issue:SHOP-455",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-03T15:35:12Z",
+     "event": "CI unit suite passes at commit 4f2c1a9e.",
+     "source": "",
+     "unresolved_citations": [
+      "source: junit:ci-unit"
+     ]
+    },
+    {
+     "when": "2026-03-03T15:40:00Z",
+     "event": "PR #318 merged.",
+     "source": "code-change.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-09T17:00:00Z",
+     "event": "Regression run RUN-77 closes: TC-210 and TC-212 passed; TC-211 not run.",
+     "source": "release:4.2.0",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-09T18:00:00Z",
+     "event": "Release 4.2.0 approved with a note that quantity edits after applying a code are not covered.",
+     "source": "release:4.2.0",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-10T08:00:00Z",
+     "event": "Release 4.2.0 deployed to production.",
+     "source": "production-learning.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-14T07:30:00Z",
+     "event": "Finance reconciliation flags discounts above the promo percentage.",
+     "source": "production-learning.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-14T09:10:00Z",
+     "event": "SHOP-482 opened.",
+     "source": "issue:SHOP-482",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-14T17:20:00Z",
+     "event": "Fix PR #331 merged.",
+     "source": "fix-change.md",
+     "unresolved_citations": []
+    }
+   ],
+   "known_before_release": [
+    "The pricing rules required discounts to be calculated from the undiscounted subtotal [documentation.md].",
+    "A QA question about quantity changes after applying a code was recorded on SHOP-455 and has no recorded answer [issue:SHOP-455].",
+    "The release approval note stated that quantity edits after applying a code were not covered, with follow-up SHOP-470 [release:4.2.0]."
+   ],
+   "learned_after_release": [
+    "The discount was applied a second time after a quantity change; 37 orders were affected [issue:SHOP-482].",
+    "The quantity-change hook re-applied the promo to a total that already included the discount [fix-change.md]."
+   ],
+   "ambiguities": [
+    "Whether the release manager had seen the unanswered QA question on SHOP-455 when approving the release.",
+    "Whether SHOP-460, also in release 4.2.0, touched the cart code."
+   ],
+   "missing_evidence": [
+    "Production monitoring and alerting configuration for discounts.",
+    "The content of follow-up SHOP-470.",
+    "Review discussion of PR #318 beyond the approval comment."
+   ],
+   "critical_signals": [
+    {
+     "id": "signal-001",
+     "source_artifact": "issue:SHOP-455",
+     "description": "QA asked what should happen to the discount if a quantity changes after a code is applied; the comment says this is not covered by the acceptance criteria, and no answer is recorded.",
+     "timing": "pre-release",
+     "relevance": "HIGH",
+     "confidence": "CONFIRMED",
+     "unresolved_citations": [],
+     "verified": true
+    },
+    {
+     "id": "signal-002",
+     "source_artifact": "release:4.2.0",
+     "description": "The release approval note states that quantity edits after applying a code are not covered in release 4.2.0, with follow-up SHOP-470.",
+     "timing": "pre-release",
+     "relevance": "HIGH",
+     "confidence": "UNKNOWN",
+     "unresolved_citations": [],
+     "verified": false
+    }
+   ]
+  },
+  "2-validation": {
+   "activities": [
+    {
+     "activity": "Automate what is repeatable",
+     "finding": "The promo percentage and expired-code checks were automated in the unit suite; no automated test changes a quantity after applying a code.",
+     "status": "UNKNOWN / INSUFFICIENT EVIDENCE",
+     "evidence": [],
+     "evidence_status": "NOT_ESTABLISHED",
+     "evidence_status_reason": "No resolving evidence supports this activity interpretation."
+    },
+    {
+     "activity": "Analyze change impact",
+     "finding": "PR #318 changed cart/events.py so that the discount is recalculated on any cart change, which is wider than the story's acceptance criteria describe.",
+     "status": "UNKNOWN / INSUFFICIENT EVIDENCE",
+     "evidence": [
+      "code-change.md"
+     ],
+     "evidence_status": "EVIDENCE_LINKED_REVIEW_REQUIRED",
+     "evidence_status_reason": "References resolve, but the activity interpretation has no independently verified semantic support."
+    },
+    {
+     "activity": "Select regression intelligently",
+     "finding": "TC-211 was not run in RUN-77.",
+     "status": "POSSIBLE CONTRIBUTING FACTOR",
+     "evidence": [
+      "release:4.2.0"
+     ],
+     "evidence_status": "EVIDENCE_LINKED_REVIEW_REQUIRED",
+     "evidence_status_reason": "References resolve, but the activity interpretation has no independently verified semantic support."
+    },
+    {
+     "activity": "Release with informed confidence",
+     "finding": "The release decision recorded the uncovered quantity-edit condition and approved the release with a follow-up.",
+     "status": "UNKNOWN / INSUFFICIENT EVIDENCE",
+     "evidence": [
+      "release:4.2.0"
+     ],
+     "evidence_status": "EVIDENCE_LINKED_REVIEW_REQUIRED",
+     "evidence_status_reason": "References resolve, but the activity interpretation has no independently verified semantic support."
+    },
+    {
+     "activity": "Monitor production",
+     "finding": "Detection came from a daily finance reconciliation four days after release; no monitoring evidence was provided.",
+     "status": "UNKNOWN / INSUFFICIENT EVIDENCE",
+     "evidence": [
+      "production-learning.md"
+     ],
+     "evidence_status": "EVIDENCE_LINKED_REVIEW_REQUIRED",
+     "evidence_status_reason": "References resolve, but the activity interpretation has no independently verified semantic support."
+    }
+   ],
+   "test_coverage_failure_mode": "1. No relevant test existed: the recorded tests apply a code to an unchanged cart, reload the page, or use an expired code; none changes a quantity after applying a code.",
+   "ci_evidence_provided": "junit:ci-unit shows three unit tests passing at commit 4f2c1a9e. test_quantity_update_changes_total exercises a quantity change without a promo code. No CI result exercises a quantity change after a code is applied.",
+   "release_signals": [
+    "Release approval note: quantity edits after applying a code are not covered in this release; follow-up SHOP-470 (signal-002)."
+   ],
+   "missing_evidence": [
+    "Whether SHOP-470 was scheduled or worked before the incident.",
+    "Production monitoring configuration."
+   ],
+   "test_relevance": [
+    {
+     "test": "TC-210",
+     "tested_trigger_condition": "Apply SPRING10 to a cart with one item at quantity 1.",
+     "tested_state": "Unchanged cart after applying the code.",
+     "expected_behavior": "Discount 5.00 and total 45.00.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "Same code path for applying a percentage promo code.",
+     "material_differences": "The quantity never changes after the code is applied, so the recalculation hook never runs.",
+     "could_this_test_detect_the_failure": "NO",
+     "was_selected_or_executed": "YES",
+     "confidence": "UNKNOWN",
+     "reasoning": "The test stops before any cart change.",
+     "evidence": [
+      "release:4.2.0"
+     ],
+     "classification": "RELATED BUT NOT DETECTING"
+    },
+    {
+     "test": "TC-211",
+     "tested_trigger_condition": "Reload the cart page after applying SPRING10.",
+     "tested_state": "A cart with a code applied.",
+     "expected_behavior": "The code is still shown as applied.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "A cart with a code applied, followed by a later event.",
+     "material_differences": "A page reload is not a quantity change, and the test checks only that the code is shown, not the discount amount.",
+     "could_this_test_detect_the_failure": "UNCERTAIN",
+     "was_selected_or_executed": "NO",
+     "confidence": "UNKNOWN",
+     "reasoning": "Effective unresolved row constraints: Detectability remains uncertain: the proposed detecting conclusion conflicts with the row's stated material differences.",
+     "evidence": [
+      "release:4.2.0"
+     ],
+     "classification": "UNCERTAIN"
+    },
+    {
+     "test": "TC-212",
+     "tested_trigger_condition": "Apply an expired code.",
+     "tested_state": "Expired code WINTER5.",
+     "expected_behavior": "Rejection message, no discount.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "Promo code entry on the cart page.",
+     "material_differences": "No discount is applied, so no recalculation can happen.",
+     "could_this_test_detect_the_failure": "NO",
+     "was_selected_or_executed": "YES",
+     "confidence": "UNKNOWN",
+     "reasoning": "Different branch of the promo code logic.",
+     "evidence": [
+      "release:4.2.0"
+     ],
+     "classification": "RELATED BUT NOT DETECTING"
+    },
+    {
+     "test": "tests.test_cart::test_quantity_update_changes_total",
+     "tested_trigger_condition": "Change a quantity.",
+     "tested_state": "A cart without a promo code.",
+     "expected_behavior": "The total changes with the quantity.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "The same quantity-change event.",
+     "material_differences": "No promo code is applied, so the discount recalculation path is not exercised.",
+     "could_this_test_detect_the_failure": "NO",
+     "was_selected_or_executed": "YES",
+     "confidence": "UNKNOWN",
+     "reasoning": "Adjacent behavior only.",
+     "evidence": [],
+     "classification": "RELATED BUT NOT DETECTING"
+    }
+   ],
+   "presented_test_inventory": {
+    "status": "unknown",
+    "reason": "No saved actual admission inventory."
+   },
+   "regression_selection_gap": "UNCERTAIN",
+   "used_critical_signal_ids": [
+    "signal-002"
+   ]
+  },
+  "3-hypotheses": {
+   "hypotheses": [
+    {
+     "id": "H1",
+     "statement": "PR #318 calculates the discount from the cart total after discounts and re-applies it when a quantity changes, so a second discount is taken from an already-discounted total.",
+     "layer": "Defect introduction",
+     "loop_activity": "Analyze change impact",
+     "confidence": "STRONGLY SUPPORTED",
+     "supporting": [
+      {
+       "source": "code-change.md",
+       "quote": "subtotal = cart.total()  # total after discounts already applied"
+      },
+      {
+       "source": "issue:SHOP-482",
+       "quote": "Customers who changed the quantity after applying SPRING10 received 19% off instead of 10%."
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "The history of cart/events.py before release 4.2.0, and whether SHOP-460 changed the cart total calculation.",
+     "cited_sources": [
+      "code-change.md",
+      "issue:SHOP-482"
+     ],
+     "check_status": "SUPPORTED",
+     "quote_checks": [
+      {
+       "role": "supporting",
+       "source": "code-change.md",
+       "status": "VERIFIED_QUOTE"
+      },
+      {
+       "role": "supporting",
+       "source": "issue:SHOP-482",
+       "status": "VERIFIED_QUOTE"
+      }
+     ]
+    },
+    {
+     "id": "H2",
+     "statement": "No test before release exercised a quantity change after a promo code was applied, so pre-release validation could not expose the defect.",
+     "layer": "Detection / escape gap",
+     "loop_activity": "Define test expectations",
+     "confidence": "UNKNOWN",
+     "supporting": [
+      {
+       "source": "tests.md",
+       "quote": "Steps: Reload the cart page."
+      },
+      {
+       "source": "junit:ci-unit",
+       "quote": "tests.test_cart::test_quantity_update_changes_total: passed"
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "A complete export of the test-management system and all automated test suites run for 4.2.0.",
+     "cited_sources": [],
+     "check_status": "NOT ESTABLISHED",
+     "quote_checks": [
+      {
+       "role": "supporting",
+       "source": "tests.md",
+       "status": "UNKNOWN_SOURCE"
+      },
+      {
+       "role": "supporting",
+       "source": "junit:ci-unit",
+       "status": "UNKNOWN_SOURCE"
+      }
+     ]
+    },
+    {
+     "id": "H3",
+     "statement": "The release decision knowingly accepted the uncovered quantity-edit condition with a follow-up, without a compensating control such as monitoring.",
+     "layer": "Release decision gap",
+     "loop_activity": "Release with informed confidence",
+     "confidence": "POSSIBLE CONTRIBUTING FACTOR",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "Quantity edits after applying a code are not covered in this release; follow-up SHOP-470."
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "The content and schedule of SHOP-470, and whether any compensating control was discussed at approval.",
+     "cited_sources": [
+      "release:4.2.0"
+     ],
+     "check_status": "NOT ESTABLISHED",
+     "quote_checks": [
+      {
+       "role": "supporting",
+       "source": "release:4.2.0",
+       "status": "MISSING_QUOTE"
+      }
+     ]
+    },
+    {
+     "id": "H4",
+     "statement": "The expected discount behavior after a quantity change was never defined, because the QA question on SHOP-455 was not answered before release.",
+     "layer": "Prevention gap",
+     "loop_activity": "Clarify intent",
+     "confidence": "POSSIBLE CONTRIBUTING FACTOR",
+     "supporting": [
+      {
+       "source": "issue:SHOP-455",
+       "quote": "What should happen to the discount if the customer changes a quantity after applying a code? Not covered by the acceptance criteria."
+      }
+     ],
+     "contradicting": [
+      {
+       "source": "documentation.md",
+       "quote": "Any change to the cart recalculates the discount from the undiscounted subtotal."
+      }
+     ],
+     "what_would_settle_it": "Whether the pricing rules document was known to the story's team and linked from SHOP-455.",
+     "cited_sources": [
+      "issue:SHOP-455"
+     ],
+     "check_status": "CONTRADICTED",
+     "quote_checks": [
+      {
+       "role": "supporting",
+       "source": "issue:SHOP-455",
+       "status": "VERIFIED_QUOTE"
+      },
+      {
+       "role": "contradicting",
+       "source": "documentation.md",
+       "status": "VERIFIED_QUOTE"
+      }
+     ]
+    },
+    {
+     "id": "H5",
+     "statement": "TC-211 was left out of the regression run; had it been selected, it would have caught the defect before release.",
+     "layer": "Detection / escape gap",
+     "loop_activity": "Select regression intelligently",
+     "confidence": "UNKNOWN",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "Not run: TC-211"
+      }
+     ],
+     "contradicting": [
+      {
+       "source": "tests.md",
+       "quote": "Expected: The code SPRING10 is still shown as applied."
+      }
+     ],
+     "what_would_settle_it": "Running TC-211 against release 4.2.0.",
+     "cited_sources": [
+      "release:4.2.0"
+     ],
+     "check_status": "NOT ESTABLISHED",
+     "quote_checks": [
+      {
+       "role": "supporting",
+       "source": "release:4.2.0",
+       "status": "VERIFIED_QUOTE"
+      },
+      {
+       "role": "contradicting",
+       "source": "tests.md",
+       "status": "UNKNOWN_SOURCE"
+      }
+     ]
+    },
+    {
+     "id": "H6",
+     "statement": "Monitoring alerted on the discount anomaly within an hour of release, but the alert was not acted on for four days.",
+     "layer": "Production detection gap",
+     "loop_activity": "Monitor production",
+     "confidence": "UNKNOWN",
+     "supporting": [
+      {
+       "source": "monitoring-alerts.md",
+       "quote": "Discount ratio above threshold"
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "Alert history for the checkout service between 2026-03-10 and 2026-03-14.",
+     "cited_sources": [],
+     "check_status": "NOT ESTABLISHED",
+     "quote_checks": [
+      {
+       "role": "supporting",
+       "source": "monitoring-alerts.md",
+       "status": "UNKNOWN_SOURCE"
+      }
+     ]
+    },
+    {
+     "id": "H7",
+     "statement": "The quantity-change hook in cart/events.py, not the promo calculation itself, introduced the double discount.",
+     "layer": "Defect introduction",
+     "loop_activity": "Analyze change impact",
+     "confidence": "POSSIBLE CONTRIBUTING FACTOR",
+     "supporting": [
+      {
+       "source": "fix-change.md",
+       "quote": "The quantity-change hook in cart/events.py re-applied the promo to a total that already included the discount."
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "Whether cart/events.py called the promo calculation before PR #318.",
+     "cited_sources": [
+      "fix-change.md"
+     ],
+     "check_status": "SUPPORTED",
+     "quote_checks": [
+      {
+       "role": "supporting",
+       "source": "fix-change.md",
+       "status": "VERIFIED_QUOTE"
+      }
+     ]
+    }
+   ],
+   "unknowns": [
+    "Whether the release manager saw the QA question on SHOP-455 (no record of it in the release evidence).",
+    "What SHOP-470 contained and whether it was scheduled.",
+    "Whether any production monitoring covers discount amounts (no monitoring evidence was provided).",
+    "Whether SHOP-460, released in the same version, touched cart code."
+   ],
+   "what_worked": [
+    {
+     "statement": "The finance team's daily reconciliation detected the defect within four days, before any customer complaint.",
+     "supporting": [
+      {
+       "source": "production-learning.md",
+       "quote": "No customer complaint was received before detection."
+      }
+     ],
+     "quote_checks": [
+      {
+       "source": "production-learning.md",
+       "status": "VERIFIED_QUOTE"
+      }
+     ]
+    },
+    {
+     "statement": "The expired-code path stayed protected: TC-212 ran and passed in the release regression.",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "TC-212: PASSED"
+      }
+     ],
+     "quote_checks": [
+      {
+       "source": "release:4.2.0",
+       "status": "VERIFIED_QUOTE"
+      }
+     ]
+    },
+    {
+     "statement": "The release decision recorded the known uncovered condition explicitly instead of leaving it tacit.",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "follow-up SHOP-470"
+      }
+     ],
+     "quote_checks": [
+      {
+       "source": "release:4.2.0",
+       "status": "MISSING_QUOTE"
+      }
+     ]
+    }
+   ],
+   "proposed_regression_tests": [
+    {
+     "id": "T1",
+     "title": "Percentage promo after a quantity change",
+     "condition": "Given a cart with one item at 20.00 and SPRING10 applied, when the quantity changes from 1 to 3, then the discount is 6.00 and the total is 54.00.",
+     "level": "unit and API",
+     "destination": "automation repository (pricing tests) and test-management system",
+     "addresses": [
+      "H1",
+      "H2"
+     ],
+     "review_flags": []
+    },
+    {
+     "id": "T2",
+     "title": "Discount never exceeds the promo percentage across cart edits",
+     "condition": "For random sequences of add, remove and quantity changes after applying a percentage code, the discount always equals the percentage of the undiscounted subtotal.",
+     "level": "unit (property-based)",
+     "destination": "automation repository (pricing tests)",
+     "addresses": [
+      "H1"
+     ],
+     "review_flags": []
+    },
+    {
+     "id": "T3",
+     "title": "Add TC-211 to the release regression set",
+     "condition": "Run TC-211 in every release regression run.",
+     "level": "manual",
+     "destination": "test-management system",
+     "addresses": [
+      "H5"
+     ],
+     "review_flags": [
+      "none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap"
+     ]
+    }
+   ],
+   "proposed_controls": [
+    {
+     "id": "C1",
+     "loop_activity": "Define test expectations",
+     "control": "Before a story is marked Done, every open question in its comments is either answered and turned into an acceptance criterion or test case, or explicitly accepted as out of scope with a linked follow-up.",
+     "destination": "issue tracker workflow (definition of done)",
+     "owner_type": "delivery team with QE",
+     "recurrence_protection": "Questions such as the one on SHOP-455 become observable test expectations instead of staying in a comment thread.",
+     "addresses": [
+      "H2",
+      "H4"
+     ],
+     "review_flags": [
+      "none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap"
+     ]
+    },
+    {
+     "id": "C2",
+     "loop_activity": "Release with informed confidence",
+     "control": "When a release note accepts an uncovered condition, the approval names a compensating control (a monitor, a feature flag or a dated follow-up) for that condition.",
+     "destination": "release checklist",
+     "owner_type": "release manager",
+     "recurrence_protection": "Accepted risks get a detection path instead of relying on a follow-up ticket alone.",
+     "addresses": [
+      "H3"
+     ],
+     "review_flags": [
+      "none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap"
+     ]
+    },
+    {
+     "id": "C3",
+     "loop_activity": "Monitor production",
+     "control": "Alert when any order's discount exceeds the configured percentage of its undiscounted subtotal.",
+     "destination": "monitoring",
+     "owner_type": "platform / SRE with the checkout team",
+     "recurrence_protection": "Detects discount calculation errors within minutes instead of at the next daily reconciliation.",
+     "addresses": [
+      "H6"
+     ],
+     "review_flags": [
+      "none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap"
+     ]
+    },
+    {
+     "id": "C4",
+     "loop_activity": "Feed learning back into the knowledge base",
+     "control": "Improve testing of promotions and add more test cases.",
+     "destination": "quality knowledge base",
+     "owner_type": "QE",
+     "recurrence_protection": "More coverage.",
+     "addresses": [
+      "H2"
+     ],
+     "review_flags": [
+      "none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap",
+      "uses vague wording the methodology rejects: improve testing, add more test cases"
+     ]
+    }
+   ]
+  }
+ },
+ "as_answered": {
+  "1-trace": {
+   "production_problem": "After applying a percentage promo code on the cart page, changing an item quantity reduced the order total a second time (19% off instead of 10% for SPRING10). 37 orders were affected between 2026-03-10 and 2026-03-14. It was detected by the finance team's daily discount reconciliation, not by customers [issue:SHOP-482] [production-learning.md].",
+   "links": [
+    {
+     "from_item": "SHOP-482",
+     "to_item": "SHOP-455",
+     "source_artifact": "issue:SHOP-482",
+     "target_artifact": "issue:SHOP-455",
+     "relationship_type": "is caused by",
+     "direct_or_inferred": "DIRECT",
+     "evidence_quote": "is caused by: SHOP-455",
+     "confidence": "CONFIRMED",
+     "basis": "The production issue records an 'is caused by' link to SHOP-455.",
+     "unresolved_citations": [],
+     "verified_support": ""
+    },
+    {
+     "from_item": "SHOP-455",
+     "to_item": "PR #318",
+     "source_artifact": "issue:SHOP-455",
+     "target_artifact": "code-change.md",
+     "relationship_type": "implemented by",
+     "direct_or_inferred": "DIRECT",
+     "evidence_quote": "SHOP-455 apply promo codes on the cart page",
+     "confidence": "CONFIRMED",
+     "basis": "The pull request title names SHOP-455, and the story comment says it was merged in PR #318.",
+     "unresolved_citations": [],
+     "verified_support": ""
+    },
+    {
+     "from_item": "PR #318",
+     "to_item": "junit:ci-unit",
+     "source_artifact": "code-change.md",
+     "target_artifact": "junit:ci-unit",
+     "relationship_type": "validated by",
+     "direct_or_inferred": "DIRECT",
+     "evidence_quote": "4f2c1a9e",
+     "confidence": "CONFIRMED",
+     "basis": "The CI results and the pull request show the same commit 4f2c1a9e.",
+     "unresolved_citations": [],
+     "verified_support": ""
+    },
+    {
+     "from_item": "PR #318",
+     "to_item": "TC-210",
+     "source_artifact": "code-change.md",
+     "target_artifact": "tests.md",
+     "relationship_type": "tested by",
+     "direct_or_inferred": "INFERRED",
+     "evidence_quote": "",
+     "confidence": "POSSIBLE CONTRIBUTING FACTOR",
+     "basis": "Same feature area; TC-210 is automated as test_promo_applies_percentage, which the pull request adds.",
+     "unresolved_citations": [],
+     "verified_support": ""
+    },
+    {
+     "from_item": "SHOP-455",
+     "to_item": "Release 4.2.0",
+     "source_artifact": "issue:SHOP-455",
+     "target_artifact": "release:4.2.0",
+     "relationship_type": "released in",
+     "direct_or_inferred": "DIRECT",
+     "evidence_quote": "Work items: SHOP-455, SHOP-460",
+     "confidence": "CONFIRMED",
+     "basis": "The release record lists SHOP-455 as a work item.",
+     "unresolved_citations": [],
+     "verified_support": ""
+    }
+   ],
+   "timeline": [
+    {
+     "when": "2026-01-15",
+     "event": "Pricing rules document says percentage discounts are calculated from the undiscounted subtotal.",
+     "source": "documentation.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-02-26T14:20:00Z",
+     "event": "QA engineer asks on SHOP-455 what happens to the discount when a quantity changes after a code is applied.",
+     "source": "issue:SHOP-455",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-03T15:35:12Z",
+     "event": "CI unit suite passes at commit 4f2c1a9e.",
+     "source": "junit:ci-unit",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-03T15:40:00Z",
+     "event": "PR #318 merged.",
+     "source": "code-change.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-09T17:00:00Z",
+     "event": "Regression run RUN-77 closes: TC-210 and TC-212 passed; TC-211 not run.",
+     "source": "release:4.2.0",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-09T18:00:00Z",
+     "event": "Release 4.2.0 approved with a note that quantity edits after applying a code are not covered.",
+     "source": "release:4.2.0",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-10T08:00:00Z",
+     "event": "Release 4.2.0 deployed to production.",
+     "source": "production-learning.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-14T07:30:00Z",
+     "event": "Finance reconciliation flags discounts above the promo percentage.",
+     "source": "production-learning.md",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-14T09:10:00Z",
+     "event": "SHOP-482 opened.",
+     "source": "issue:SHOP-482",
+     "unresolved_citations": []
+    },
+    {
+     "when": "2026-03-14T17:20:00Z",
+     "event": "Fix PR #331 merged.",
+     "source": "fix-change.md",
+     "unresolved_citations": []
+    }
+   ],
+   "known_before_release": [
+    "The pricing rules required discounts to be calculated from the undiscounted subtotal [documentation.md].",
+    "A QA question about quantity changes after applying a code was recorded on SHOP-455 and has no recorded answer [issue:SHOP-455].",
+    "The release approval note stated that quantity edits after applying a code were not covered, with follow-up SHOP-470 [release:4.2.0]."
+   ],
+   "learned_after_release": [
+    "The discount was applied a second time after a quantity change; 37 orders were affected [issue:SHOP-482].",
+    "The quantity-change hook re-applied the promo to a total that already included the discount [fix-change.md]."
+   ],
+   "ambiguities": [
+    "Whether the release manager had seen the unanswered QA question on SHOP-455 when approving the release.",
+    "Whether SHOP-460, also in release 4.2.0, touched the cart code."
+   ],
+   "missing_evidence": [
+    "Production monitoring and alerting configuration for discounts.",
+    "The content of follow-up SHOP-470.",
+    "Review discussion of PR #318 beyond the approval comment."
+   ],
+   "critical_signals": [
+    {
+     "id": "",
+     "source_artifact": "issue:SHOP-455",
+     "description": "QA asked what should happen to the discount if a quantity changes after a code is applied; the comment says this is not covered by the acceptance criteria, and no answer is recorded.",
+     "timing": "pre-release",
+     "relevance": "HIGH",
+     "confidence": "CONFIRMED",
+     "unresolved_citations": [],
+     "verified": null
+    },
+    {
+     "id": "",
+     "source_artifact": "release:4.2.0",
+     "description": "The release approval note states that quantity edits after applying a code are not covered in release 4.2.0, with follow-up SHOP-470.",
+     "timing": "pre-release",
+     "relevance": "HIGH",
+     "confidence": "CONFIRMED",
+     "unresolved_citations": [],
+     "verified": null
+    }
+   ]
+  },
+  "2-validation": {
+   "activities": [
+    {
+     "activity": "Automate what is repeatable",
+     "finding": "The promo percentage and expired-code checks were automated in the unit suite; no automated test changes a quantity after applying a code.",
+     "status": "STRONGLY SUPPORTED",
+     "evidence": [
+      "tests.md: TC-210",
+      "junit:ci-unit"
+     ],
+     "evidence_status": "NOT_ESTABLISHED",
+     "evidence_status_reason": "No independent semantic support verified."
+    },
+    {
+     "activity": "Analyze change impact",
+     "finding": "PR #318 changed cart/events.py so that the discount is recalculated on any cart change, which is wider than the story's acceptance criteria describe.",
+     "status": "STRONGLY SUPPORTED",
+     "evidence": [
+      "code-change.md"
+     ],
+     "evidence_status": "NOT_ESTABLISHED",
+     "evidence_status_reason": "No independent semantic support verified."
+    },
+    {
+     "activity": "Select regression intelligently",
+     "finding": "TC-211 was not run in RUN-77.",
+     "status": "POSSIBLE CONTRIBUTING FACTOR",
+     "evidence": [
+      "release:4.2.0"
+     ],
+     "evidence_status": "NOT_ESTABLISHED",
+     "evidence_status_reason": "No independent semantic support verified."
+    },
+    {
+     "activity": "Release with informed confidence",
+     "finding": "The release decision recorded the uncovered quantity-edit condition and approved the release with a follow-up.",
+     "status": "CONFIRMED",
+     "evidence": [
+      "release:4.2.0",
+      "signal-002"
+     ],
+     "evidence_status": "NOT_ESTABLISHED",
+     "evidence_status_reason": "No independent semantic support verified."
+    },
+    {
+     "activity": "Monitor production",
+     "finding": "Detection came from a daily finance reconciliation four days after release; no monitoring evidence was provided.",
+     "status": "UNKNOWN / INSUFFICIENT EVIDENCE",
+     "evidence": [
+      "production-learning.md"
+     ],
+     "evidence_status": "NOT_ESTABLISHED",
+     "evidence_status_reason": "No independent semantic support verified."
+    }
+   ],
+   "test_coverage_failure_mode": "1. No relevant test existed: the recorded tests apply a code to an unchanged cart, reload the page, or use an expired code; none changes a quantity after applying a code.",
+   "ci_evidence_provided": "junit:ci-unit shows three unit tests passing at commit 4f2c1a9e. test_quantity_update_changes_total exercises a quantity change without a promo code. No CI result exercises a quantity change after a code is applied.",
+   "release_signals": [
+    "Release approval note: quantity edits after applying a code are not covered in this release; follow-up SHOP-470 (signal-002)."
+   ],
+   "missing_evidence": [
+    "Whether SHOP-470 was scheduled or worked before the incident.",
+    "Production monitoring configuration."
+   ],
+   "test_relevance": [
+    {
+     "test": "TC-210",
+     "tested_trigger_condition": "Apply SPRING10 to a cart with one item at quantity 1.",
+     "tested_state": "Unchanged cart after applying the code.",
+     "expected_behavior": "Discount 5.00 and total 45.00.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "Same code path for applying a percentage promo code.",
+     "material_differences": "The quantity never changes after the code is applied, so the recalculation hook never runs.",
+     "could_this_test_detect_the_failure": "NO",
+     "was_selected_or_executed": "YES",
+     "confidence": "STRONGLY SUPPORTED",
+     "reasoning": "The test stops before any cart change.",
+     "evidence": [
+      "tests.md: TC-210",
+      "release:4.2.0"
+     ],
+     "classification": ""
+    },
+    {
+     "test": "TC-211",
+     "tested_trigger_condition": "Reload the cart page after applying SPRING10.",
+     "tested_state": "A cart with a code applied.",
+     "expected_behavior": "The code is still shown as applied.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "A cart with a code applied, followed by a later event.",
+     "material_differences": "A page reload is not a quantity change, and the test checks only that the code is shown, not the discount amount.",
+     "could_this_test_detect_the_failure": "YES",
+     "was_selected_or_executed": "NO",
+     "confidence": "STRONGLY SUPPORTED",
+     "reasoning": "It is the only test that touches the cart after a code is applied, and it was not run.",
+     "evidence": [
+      "tests.md: TC-211",
+      "release:4.2.0"
+     ],
+     "classification": ""
+    },
+    {
+     "test": "TC-212",
+     "tested_trigger_condition": "Apply an expired code.",
+     "tested_state": "Expired code WINTER5.",
+     "expected_behavior": "Rejection message, no discount.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "Promo code entry on the cart page.",
+     "material_differences": "No discount is applied, so no recalculation can happen.",
+     "could_this_test_detect_the_failure": "NO",
+     "was_selected_or_executed": "YES",
+     "confidence": "CONFIRMED",
+     "reasoning": "Different branch of the promo code logic.",
+     "evidence": [
+      "tests.md: TC-212",
+      "release:4.2.0"
+     ],
+     "classification": ""
+    },
+    {
+     "test": "tests.test_cart::test_quantity_update_changes_total",
+     "tested_trigger_condition": "Change a quantity.",
+     "tested_state": "A cart without a promo code.",
+     "expected_behavior": "The total changes with the quantity.",
+     "failing_production_condition": "A quantity is changed after a percentage code has been applied.",
+     "overlap": "The same quantity-change event.",
+     "material_differences": "No promo code is applied, so the discount recalculation path is not exercised.",
+     "could_this_test_detect_the_failure": "NO",
+     "was_selected_or_executed": "YES",
+     "confidence": "STRONGLY SUPPORTED",
+     "reasoning": "Adjacent behavior only.",
+     "evidence": [
+      "junit:ci-unit"
+     ],
+     "classification": ""
+    }
+   ],
+   "presented_test_inventory": {
+    "status": "unknown",
+    "reason": "No saved actual admission inventory."
+   },
+   "regression_selection_gap": "",
+   "used_critical_signal_ids": [
+    "signal-002"
+   ]
+  },
+  "3-hypotheses": {
+   "hypotheses": [
+    {
+     "id": "H1",
+     "statement": "PR #318 calculates the discount from the cart total after discounts and re-applies it when a quantity changes, so a second discount is taken from an already-discounted total.",
+     "layer": "Defect introduction",
+     "loop_activity": "Analyze change impact",
+     "confidence": "STRONGLY SUPPORTED",
+     "supporting": [
+      {
+       "source": "code-change.md",
+       "quote": "subtotal = cart.total()  # total after discounts already applied"
+      },
+      {
+       "source": "issue:SHOP-482",
+       "quote": "Customers who changed the quantity after applying SPRING10 received 19% off instead of 10%."
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "The history of cart/events.py before release 4.2.0, and whether SHOP-460 changed the cart total calculation.",
+     "cited_sources": [],
+     "check_status": "",
+     "quote_checks": []
+    },
+    {
+     "id": "H2",
+     "statement": "No test before release exercised a quantity change after a promo code was applied, so pre-release validation could not expose the defect.",
+     "layer": "Detection / escape gap",
+     "loop_activity": "Define test expectations",
+     "confidence": "CONFIRMED",
+     "supporting": [
+      {
+       "source": "tests.md",
+       "quote": "Steps: Reload the cart page."
+      },
+      {
+       "source": "junit:ci-unit",
+       "quote": "tests.test_cart::test_quantity_update_changes_total: passed"
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "A complete export of the test-management system and all automated test suites run for 4.2.0.",
+     "cited_sources": [],
+     "check_status": "",
+     "quote_checks": []
+    },
+    {
+     "id": "H3",
+     "statement": "The release decision knowingly accepted the uncovered quantity-edit condition with a follow-up, without a compensating control such as monitoring.",
+     "layer": "Release decision gap",
+     "loop_activity": "Release with informed confidence",
+     "confidence": "STRONGLY SUPPORTED",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "Quantity edits after applying a code are not covered in this release; follow-up SHOP-470."
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "The content and schedule of SHOP-470, and whether any compensating control was discussed at approval.",
+     "cited_sources": [],
+     "check_status": "",
+     "quote_checks": []
+    },
+    {
+     "id": "H4",
+     "statement": "The expected discount behavior after a quantity change was never defined, because the QA question on SHOP-455 was not answered before release.",
+     "layer": "Prevention gap",
+     "loop_activity": "Clarify intent",
+     "confidence": "STRONGLY SUPPORTED",
+     "supporting": [
+      {
+       "source": "issue:SHOP-455",
+       "quote": "What should happen to the discount if the customer changes a quantity after applying a code? Not covered by the acceptance criteria."
+      }
+     ],
+     "contradicting": [
+      {
+       "source": "documentation.md",
+       "quote": "Any change to the cart recalculates the discount from the undiscounted subtotal."
+      }
+     ],
+     "what_would_settle_it": "Whether the pricing rules document was known to the story's team and linked from SHOP-455.",
+     "cited_sources": [],
+     "check_status": "",
+     "quote_checks": []
+    },
+    {
+     "id": "H5",
+     "statement": "TC-211 was left out of the regression run; had it been selected, it would have caught the defect before release.",
+     "layer": "Detection / escape gap",
+     "loop_activity": "Select regression intelligently",
+     "confidence": "STRONGLY SUPPORTED",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "Not run: TC-211"
+      }
+     ],
+     "contradicting": [
+      {
+       "source": "tests.md",
+       "quote": "Expected: The code SPRING10 is still shown as applied."
+      }
+     ],
+     "what_would_settle_it": "Running TC-211 against release 4.2.0.",
+     "cited_sources": [],
+     "check_status": "",
+     "quote_checks": []
+    },
+    {
+     "id": "H6",
+     "statement": "Monitoring alerted on the discount anomaly within an hour of release, but the alert was not acted on for four days.",
+     "layer": "Production detection gap",
+     "loop_activity": "Monitor production",
+     "confidence": "STRONGLY SUPPORTED",
+     "supporting": [
+      {
+       "source": "monitoring-alerts.md",
+       "quote": "Discount ratio above threshold"
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "Alert history for the checkout service between 2026-03-10 and 2026-03-14.",
+     "cited_sources": [],
+     "check_status": "",
+     "quote_checks": []
+    },
+    {
+     "id": "H7",
+     "statement": "The quantity-change hook in cart/events.py, not the promo calculation itself, introduced the double discount.",
+     "layer": "Defect introduction",
+     "loop_activity": "Analyze change impact",
+     "confidence": "STRONGLY SUPPORTED",
+     "supporting": [
+      {
+       "source": "fix-change.md",
+       "quote": "The quantity-change hook in cart/events.py re-applied the promo to a total that already included the discount."
+      }
+     ],
+     "contradicting": [],
+     "what_would_settle_it": "Whether cart/events.py called the promo calculation before PR #318.",
+     "cited_sources": [],
+     "check_status": "",
+     "quote_checks": []
+    }
+   ],
+   "unknowns": [
+    "Whether the release manager saw the QA question on SHOP-455 (no record of it in the release evidence).",
+    "What SHOP-470 contained and whether it was scheduled.",
+    "Whether any production monitoring covers discount amounts (no monitoring evidence was provided).",
+    "Whether SHOP-460, released in the same version, touched cart code."
+   ],
+   "what_worked": [
+    {
+     "statement": "The finance team's daily reconciliation detected the defect within four days, before any customer complaint.",
+     "supporting": [
+      {
+       "source": "production-learning.md",
+       "quote": "No customer complaint was received before detection."
+      }
+     ],
+     "quote_checks": []
+    },
+    {
+     "statement": "The expired-code path stayed protected: TC-212 ran and passed in the release regression.",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "TC-212: PASSED"
+      }
+     ],
+     "quote_checks": []
+    },
+    {
+     "statement": "The release decision recorded the known uncovered condition explicitly instead of leaving it tacit.",
+     "supporting": [
+      {
+       "source": "release:4.2.0",
+       "quote": "follow-up SHOP-470"
+      }
+     ],
+     "quote_checks": []
+    }
+   ],
+   "proposed_regression_tests": [
+    {
+     "id": "T1",
+     "title": "Percentage promo after a quantity change",
+     "condition": "Given a cart with one item at 20.00 and SPRING10 applied, when the quantity changes from 1 to 3, then the discount is 6.00 and the total is 54.00.",
+     "level": "unit and API",
+     "destination": "automation repository (pricing tests) and test-management system",
+     "addresses": [
+      "H1",
+      "H2"
+     ],
+     "review_flags": []
+    },
+    {
+     "id": "T2",
+     "title": "Discount never exceeds the promo percentage across cart edits",
+     "condition": "For random sequences of add, remove and quantity changes after applying a percentage code, the discount always equals the percentage of the undiscounted subtotal.",
+     "level": "unit (property-based)",
+     "destination": "automation repository (pricing tests)",
+     "addresses": [
+      "H1"
+     ],
+     "review_flags": []
+    },
+    {
+     "id": "T3",
+     "title": "Add TC-211 to the release regression set",
+     "condition": "Run TC-211 in every release regression run.",
+     "level": "manual",
+     "destination": "test-management system",
+     "addresses": [
+      "H5"
+     ],
+     "review_flags": []
+    }
+   ],
+   "proposed_controls": [
+    {
+     "id": "C1",
+     "loop_activity": "Define test expectations",
+     "control": "Before a story is marked Done, every open question in its comments is either answered and turned into an acceptance criterion or test case, or explicitly accepted as out of scope with a linked follow-up.",
+     "destination": "issue tracker workflow (definition of done)",
+     "owner_type": "delivery team with QE",
+     "recurrence_protection": "Questions such as the one on SHOP-455 become observable test expectations instead of staying in a comment thread.",
+     "addresses": [
+      "H2",
+      "H4"
+     ],
+     "review_flags": []
+    },
+    {
+     "id": "C2",
+     "loop_activity": "Release with informed confidence",
+     "control": "When a release note accepts an uncovered condition, the approval names a compensating control (a monitor, a feature flag or a dated follow-up) for that condition.",
+     "destination": "release checklist",
+     "owner_type": "release manager",
+     "recurrence_protection": "Accepted risks get a detection path instead of relying on a follow-up ticket alone.",
+     "addresses": [
+      "H3"
+     ],
+     "review_flags": []
+    },
+    {
+     "id": "C3",
+     "loop_activity": "Monitor production",
+     "control": "Alert when any order's discount exceeds the configured percentage of its undiscounted subtotal.",
+     "destination": "monitoring",
+     "owner_type": "platform / SRE with the checkout team",
+     "recurrence_protection": "Detects discount calculation errors within minutes instead of at the next daily reconciliation.",
+     "addresses": [
+      "H6"
+     ],
+     "review_flags": []
+    },
+    {
+     "id": "C4",
+     "loop_activity": "Feed learning back into the knowledge base",
+     "control": "Improve testing of promotions and add more test cases.",
+     "destination": "quality knowledge base",
+     "owner_type": "QE",
+     "recurrence_protection": "More coverage.",
+     "addresses": [
+      "H2"
+     ],
+     "review_flags": []
+    }
+   ]
+  }
+ },
+ "limitations": [
+  "No requirements artifact was provided in the case folder.",
+  "No test evidence artifact was provided in the case folder.",
+  "No ci evidence artifact was provided in the case folder."
+ ]
+}

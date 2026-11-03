@@ -1,0 +1,19 @@
+# FICTIONAL. Production issue record exported from an issue tracker.
+key: SHOP-482
+type: Bug
+title: Promo discount applied twice after changing cart quantity
+status: Done
+priority: High
+created: 2026-03-14T09:10:00Z
+affected_versions: [4.2.0]
+components: [checkout]
+description: |
+  When a customer applies a percentage promo code (for example SPRING10, 10% off) on the cart page
+  and then changes the quantity of an item, the order total is reduced a second time. Customers who
+  changed the quantity after applying SPRING10 received 19% off instead of 10%.
+
+  Detected by the finance team's daily discount reconciliation, not by a customer report.
+comments:
+  - at: 2026-03-14T11:00:00Z
+    author_role: Support lead
+    body: Reconciliation lists 37 affected orders between 2026-03-10 and 2026-03-14.

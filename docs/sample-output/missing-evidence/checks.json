@@ -1,0 +1,395 @@
+[
+ {
+  "step": "1-trace",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "1-trace",
+  "finding_type": "TRACE_LINK",
+  "qualifier": "",
+  "subject": "link 'PR #318 → junit:ci-unit'",
+  "original": "junit:ci-unit",
+  "corrected": "",
+  "reason": "link 'PR #318 → junit:ci-unit' cited 'junit:ci-unit' as its target_artifact, which names no evidence collected for this assessment (no artifact has that evidence ID or file name); removed as evidence and kept as an unresolved citation."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "1-trace",
+  "finding_type": "TRACE_LINK",
+  "qualifier": "",
+  "subject": "link 'PR #318 → TC-210'",
+  "original": "tests.md",
+  "corrected": "",
+  "reason": "link 'PR #318 → TC-210' cited 'tests.md' as its target_artifact, which names no evidence collected for this assessment (no artifact has that evidence ID or file name); removed as evidence and kept as an unresolved citation."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "1-trace",
+  "finding_type": "TIMELINE_EVENT",
+  "qualifier": "",
+  "subject": "timeline event 'CI unit suite passes at commit 4f2c1a9e.'",
+  "original": "junit:ci-unit",
+  "corrected": "",
+  "reason": "timeline event 'CI unit suite passes at commit 4f2c1a9e.' cited 'junit:ci-unit' as its source, which names no evidence collected for this assessment (no artifact has that evidence ID or file name); removed as evidence and kept as an unresolved citation."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "G-TRACE-SUPPORT",
+  "after_pass": "1-trace",
+  "finding_type": "CRITICAL_SIGNAL",
+  "qualifier": "",
+  "subject": "signal-002",
+  "original": "CONFIRMED",
+  "corrected": "UNKNOWN",
+  "reason": "critical signal signal-002 was CONFIRMED, but its source release:4.2.0 does not hold SHOP-470, which it says; it supports nothing and is held at UNKNOWN. Later findings cannot cite it as evidence."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "G-TRACE-SUPPORT",
+  "after_pass": "1-trace",
+  "finding_type": "TRACE_LINK",
+  "qualifier": "",
+  "subject": "SHOP-482 → SHOP-455",
+  "original": "DIRECT",
+  "corrected": "INFERRED",
+  "reason": "link 'SHOP-482 → SHOP-455' was claimed as DIRECT but nothing it cites records it (no collected relationship record ties the two items, no cited artifact of one item names the other, and no quoted passage was found in a cited artifact); relabelled INFERRED."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "ENGINE-NOTE",
+  "reason": "inferred link 'SHOP-482 → SHOP-455' cannot be CONFIRMED; downgraded to STRONGLY SUPPORTED."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "G-TRACE-SUPPORT",
+  "after_pass": "1-trace",
+  "finding_type": "TRACE_LINK",
+  "qualifier": "",
+  "subject": "PR #318 → junit:ci-unit",
+  "original": "DIRECT",
+  "corrected": "INFERRED",
+  "reason": "link 'PR #318 → junit:ci-unit' was claimed as DIRECT but nothing it cites records it (no collected relationship record ties the two items, no cited artifact of one item names the other, and no quoted passage was found in a cited artifact); relabelled INFERRED."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "ENGINE-NOTE",
+  "reason": "inferred link 'PR #318 → junit:ci-unit' cannot be CONFIRMED; downgraded to STRONGLY SUPPORTED."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-210",
+  "original": "tests.md: TC-210; release:4.2.0",
+  "corrected": "release:4.2.0",
+  "reason": "'TC-210' cited 'tests.md: TC-210', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: release:4.2.0."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-210",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN",
+  "reason": "'TC-210' was STRONGLY SUPPORTED, but its citation 'tests.md: TC-210' does not resolve to collected evidence, and which part of the claim it supported cannot be established; the remaining citations are not taken to support the whole claim. Lowered to UNKNOWN."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-211",
+  "original": "tests.md: TC-211; release:4.2.0",
+  "corrected": "release:4.2.0",
+  "reason": "'TC-211' cited 'tests.md: TC-211', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: release:4.2.0."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-211",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN",
+  "reason": "'TC-211' was STRONGLY SUPPORTED, but its citation 'tests.md: TC-211' does not resolve to collected evidence, and which part of the claim it supported cannot be established; the remaining citations are not taken to support the whole claim. Lowered to UNKNOWN."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-212",
+  "original": "tests.md: TC-212; release:4.2.0",
+  "corrected": "release:4.2.0",
+  "reason": "'TC-212' cited 'tests.md: TC-212', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: release:4.2.0."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-212",
+  "original": "CONFIRMED",
+  "corrected": "UNKNOWN",
+  "reason": "'TC-212' was CONFIRMED, but its citation 'tests.md: TC-212' does not resolve to collected evidence, and which part of the claim it supported cannot be established; the remaining citations are not taken to support the whole claim. Lowered to UNKNOWN."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "tests.test_cart::test_quantity_update_changes_total",
+  "original": "junit:ci-unit",
+  "corrected": "",
+  "reason": "'tests.test_cart::test_quantity_update_changes_total' cited 'junit:ci-unit', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: none."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-MATERIAL-DIFFERENCE",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-211",
+  "original": "YES",
+  "corrected": "UNCERTAIN",
+  "reason": "'TC-211' was marked able to detect the failure although material differences from the failing condition are recorded; treated as UNCERTAIN.",
+  "superseded_proposal": {
+   "status": "SUPERSEDED_UNVERIFIED_PROPOSAL",
+   "reasoning": "It is the only test that touches the cart after a code is applied, and it was not run.",
+   "confidence": "UNKNOWN"
+  },
+  "effective_interpretation": {
+   "reasoning": "Effective unresolved row constraints: Detectability remains uncertain: the proposed detecting conclusion conflicts with the row's stated material differences.",
+   "confidence": "UNKNOWN"
+  }
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-GAP-DERIVED",
+  "after_pass": "2-validation",
+  "finding_type": "REGRESSION_SELECTION_GAP",
+  "qualifier": "",
+  "subject": "",
+  "original": "SUPPORTED",
+  "corrected": "UNCERTAIN",
+  "reason": "the regression-selection gap is UNCERTAIN, not SUPPORTED as the model's own answers about each test would imply. 'TC-211' was marked able to detect the failure although material differences from the failing condition are recorded; treated as UNCERTAIN."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-EVIDENCE-REF",
+  "after_pass": "2-validation",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "Automate what is repeatable",
+  "subject": "",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN / INSUFFICIENT EVIDENCE",
+  "reason": "'Automate what is repeatable' was STRONGLY SUPPORTED without any evidence reference that checks out against the case artifacts; downgraded to UNKNOWN / INSUFFICIENT EVIDENCE."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "Automate what is repeatable",
+  "subject": "",
+  "original": "tests.md: TC-210; junit:ci-unit",
+  "corrected": "",
+  "reason": "'Automate what is repeatable' cited 'tests.md: TC-210', 'junit:ci-unit', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: none."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "Release with informed confidence",
+  "subject": "",
+  "original": "release:4.2.0; signal-002",
+  "corrected": "release:4.2.0",
+  "reason": "'Release with informed confidence' cited 'signal-002', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: release:4.2.0."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "2-validation",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "Release with informed confidence",
+  "subject": "",
+  "original": "CONFIRMED",
+  "corrected": "UNKNOWN / INSUFFICIENT EVIDENCE",
+  "reason": "'Release with informed confidence' was CONFIRMED, but its citation 'signal-002' does not resolve to collected evidence, and which part of the claim it supported cannot be established; the remaining citations are not taken to support the whole claim. Lowered to UNKNOWN / INSUFFICIENT EVIDENCE."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-ACTIVITY-ESTABLISHMENT",
+  "after_pass": "2-validation",
+  "finding_type": "ACTIVITY",
+  "qualifier": "",
+  "subject": "Analyze change impact",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN / INSUFFICIENT EVIDENCE",
+  "reason": "'Analyze change impact' was STRONGLY SUPPORTED; citation provenance does not establish the activity interpretation. Held unresolved; this does not change independently recorded execution or release facts."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "3-hypotheses",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "H2",
+  "subject": "",
+  "original": "tests.md; junit:ci-unit",
+  "corrected": "",
+  "reason": "'H2' cited 'tests.md', 'junit:ci-unit', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: none."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "G-EVIDENCE-REF",
+  "after_pass": "3-hypotheses",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "H2",
+  "subject": "",
+  "original": "CONFIRMED",
+  "corrected": "UNKNOWN",
+  "reason": "'H2' was CONFIRMED without any evidence reference that checks out against the case artifacts; downgraded to UNKNOWN."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-QUOTE-PROVENANCE",
+  "after_pass": "3-hypotheses",
+  "finding_type": "HYPOTHESIS",
+  "qualifier": "",
+  "subject": "H3",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "POSSIBLE CONTRIBUTING FACTOR",
+  "reason": "H3 was STRONGLY SUPPORTED, but none of its supporting quotes was found in the source it cites; lowered to POSSIBLE CONTRIBUTING FACTOR."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-CONTRADICTED",
+  "after_pass": "3-hypotheses",
+  "finding_type": "HYPOTHESIS",
+  "qualifier": "",
+  "subject": "H4",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "POSSIBLE CONTRIBUTING FACTOR",
+  "reason": "H4 has a contradicting quote found in documentation.md; lowered to POSSIBLE CONTRIBUTING FACTOR until a reviewer resolves the conflict."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-REGRESSION-GAP",
+  "after_pass": "3-hypotheses",
+  "finding_type": "HYPOTHESIS",
+  "qualifier": "",
+  "subject": "H5",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN",
+  "reason": "H5 attributes the escape to regression selection, but the engine-derived regression-selection gap is UNCERTAIN (it needs a test classified DETECTING that was not run); set to UNKNOWN."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "3-hypotheses",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "H6",
+  "subject": "",
+  "original": "monitoring-alerts.md",
+  "corrected": "",
+  "reason": "'H6' cited 'monitoring-alerts.md', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: none."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "G-EVIDENCE-REF",
+  "after_pass": "3-hypotheses",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "H6",
+  "subject": "",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN",
+  "reason": "'H6' was STRONGLY SUPPORTED without any evidence reference that checks out against the case artifacts; downgraded to UNKNOWN."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-POST-RELEASE-ONLY",
+  "after_pass": "3-hypotheses",
+  "finding_type": "HYPOTHESIS",
+  "qualifier": "",
+  "subject": "H7",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "POSSIBLE CONTRIBUTING FACTOR",
+  "reason": "H7 is supported only by evidence produced after release (remediation_changes); that shows what was learned, not what was knowable before release. Lowered to POSSIBLE CONTRIBUTING FACTOR."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-PROPOSAL-BASIS",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "T3",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal T3: none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-PROPOSAL-BASIS",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "C1",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal C1: none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-PROPOSAL-BASIS",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "C2",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal C2: none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-PROPOSAL-BASIS",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "C3",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal C3: none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-PROPOSAL-BASIS",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "C4",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal C4: none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-VAGUE-ACTION",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "C4",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal C4: uses vague wording the methodology rejects: improve testing, add more test cases."
+ }
+]

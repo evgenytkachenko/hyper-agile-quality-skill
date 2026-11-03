@@ -1,0 +1,24 @@
+# FICTIONAL release record.
+version: 4.2.0
+released: 2026-03-10T08:00:00Z
+environment: production
+commit: 9b7e3d10
+status: released
+issues: [SHOP-455, SHOP-460]
+validation_runs:
+  - id: RUN-77
+    name: 4.2.0 regression
+    status: closed
+    started: 2026-03-08T09:00:00Z
+    finished: 2026-03-09T17:00:00Z
+    results:
+      TC-210: PASSED
+      TC-212: PASSED
+    not_run: [TC-211]
+approval:
+  decision: approved
+  by_role: Release manager
+  at: 2026-03-09T18:00:00Z
+  note: >-
+    Promo codes on the cart page verified on the happy path. Quantity edits after applying a code
+    are not covered in this release; follow-up SHOP-470.

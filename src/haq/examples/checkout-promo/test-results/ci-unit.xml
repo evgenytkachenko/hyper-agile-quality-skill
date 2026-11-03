@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- FICTIONAL JUnit results for the merge commit of PR #318. -->
+<testsuites>
+  <testsuite name="unit" tests="3" failures="0" errors="0" skipped="0" timestamp="2026-03-03T15:35:12Z">
+    <properties>
+      <property name="commit" value="4f2c1a9e"/>
+      <property name="workflow" value="ci / unit"/>
+    </properties>
+    <testcase classname="tests.test_promo" name="test_promo_applies_percentage" time="0.012"/>
+    <testcase classname="tests.test_promo" name="test_promo_rejects_expired" time="0.009"/>
+    <testcase classname="tests.test_cart" name="test_quantity_update_changes_total" time="0.015"/>
+  </testsuite>
+</testsuites>

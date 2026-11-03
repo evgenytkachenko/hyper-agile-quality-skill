@@ -1,0 +1,68 @@
+# Human decisions for this investigation. Nothing here is filled in by the tool.
+# For each item set decision to one of: accept, reject, investigate. Add who decided (a role) and why.
+case: checkout-promo+missing-evidence
+hypotheses:
+  H1:
+    checked_status: SUPPORTED
+    decision: null
+    decided_by_role: null
+    reason: null
+  H2:
+    checked_status: NOT ESTABLISHED
+    decision: null
+    decided_by_role: null
+    reason: null
+  H3:
+    checked_status: NOT ESTABLISHED
+    decision: null
+    decided_by_role: null
+    reason: null
+  H4:
+    checked_status: CONTRADICTED
+    decision: null
+    decided_by_role: null
+    reason: null
+  H5:
+    checked_status: NOT ESTABLISHED
+    decision: null
+    decided_by_role: null
+    reason: null
+  H6:
+    checked_status: NOT ESTABLISHED
+    decision: null
+    decided_by_role: null
+    reason: null
+  H7:
+    checked_status: SUPPORTED
+    decision: null
+    decided_by_role: null
+    reason: null
+proposals:
+  T1:
+    decision: null
+    decided_by_role: null
+    reason: null
+  T2:
+    decision: null
+    decided_by_role: null
+    reason: null
+  T3:
+    decision: null
+    decided_by_role: null
+    reason: null
+  C1:
+    decision: null
+    decided_by_role: null
+    reason: null
+  C2:
+    decision: null
+    decided_by_role: null
+    reason: null
+  C3:
+    decision: null
+    decided_by_role: null
+    reason: null
+  C4:
+    decision: null
+    decided_by_role: null
+    reason: null

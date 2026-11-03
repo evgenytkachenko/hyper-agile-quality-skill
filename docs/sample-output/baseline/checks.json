@@ -1,0 +1,170 @@
+[
+ {
+  "step": "1-trace",
+  "guard_id": "G-TRACE-SUPPORT",
+  "after_pass": "1-trace",
+  "finding_type": "TRACE_LINK",
+  "qualifier": "",
+  "subject": "PR #318 → junit:ci-unit",
+  "original": "DIRECT",
+  "corrected": "INFERRED",
+  "reason": "link 'PR #318 → junit:ci-unit' was claimed as DIRECT but nothing it cites records it (no collected relationship record ties the two items, no cited artifact of one item names the other, and no quoted passage was found in a cited artifact); relabelled INFERRED."
+ },
+ {
+  "step": "1-trace",
+  "guard_id": "ENGINE-NOTE",
+  "reason": "inferred link 'PR #318 → junit:ci-unit' cannot be CONFIRMED; downgraded to STRONGLY SUPPORTED."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-MATERIAL-DIFFERENCE",
+  "after_pass": "2-validation",
+  "finding_type": "TEST_COULD_DETECT_FAILURE",
+  "qualifier": "",
+  "subject": "TC-211",
+  "original": "YES",
+  "corrected": "UNCERTAIN",
+  "reason": "'TC-211' was marked able to detect the failure although material differences from the failing condition are recorded; treated as UNCERTAIN.",
+  "superseded_proposal": {
+   "status": "SUPERSEDED_UNVERIFIED_PROPOSAL",
+   "reasoning": "It is the only test that touches the cart after a code is applied, and it was not run.",
+   "confidence": "STRONGLY SUPPORTED"
+  },
+  "effective_interpretation": {
+   "reasoning": "Effective unresolved row constraints: Detectability remains uncertain: the proposed detecting conclusion conflicts with the row's stated material differences.",
+   "confidence": "UNKNOWN"
+  }
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-GAP-DERIVED",
+  "after_pass": "2-validation",
+  "finding_type": "REGRESSION_SELECTION_GAP",
+  "qualifier": "",
+  "subject": "",
+  "original": "SUPPORTED",
+  "corrected": "UNCERTAIN",
+  "reason": "the regression-selection gap is UNCERTAIN, not SUPPORTED as the model's own answers about each test would imply. 'TC-211' was marked able to detect the failure although material differences from the failing condition are recorded; treated as UNCERTAIN."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-ACTIVITY-ESTABLISHMENT",
+  "after_pass": "2-validation",
+  "finding_type": "ACTIVITY",
+  "qualifier": "",
+  "subject": "Automate what is repeatable",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN / INSUFFICIENT EVIDENCE",
+  "reason": "'Automate what is repeatable' was STRONGLY SUPPORTED; citation provenance does not establish the activity interpretation. Held unresolved; this does not change independently recorded execution or release facts."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-ACTIVITY-ESTABLISHMENT",
+  "after_pass": "2-validation",
+  "finding_type": "ACTIVITY",
+  "qualifier": "",
+  "subject": "Analyze change impact",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN / INSUFFICIENT EVIDENCE",
+  "reason": "'Analyze change impact' was STRONGLY SUPPORTED; citation provenance does not establish the activity interpretation. Held unresolved; this does not change independently recorded execution or release facts."
+ },
+ {
+  "step": "2-validation",
+  "guard_id": "G-ACTIVITY-ESTABLISHMENT",
+  "after_pass": "2-validation",
+  "finding_type": "ACTIVITY",
+  "qualifier": "",
+  "subject": "Release with informed confidence",
+  "original": "CONFIRMED",
+  "corrected": "UNKNOWN / INSUFFICIENT EVIDENCE",
+  "reason": "'Release with informed confidence' was CONFIRMED; citation provenance does not establish the activity interpretation. Held unresolved; this does not change independently recorded execution or release facts."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-CONTRADICTED",
+  "after_pass": "3-hypotheses",
+  "finding_type": "HYPOTHESIS",
+  "qualifier": "",
+  "subject": "H4",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "POSSIBLE CONTRIBUTING FACTOR",
+  "reason": "H4 has a contradicting quote found in documentation.md; lowered to POSSIBLE CONTRIBUTING FACTOR until a reviewer resolves the conflict."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-REGRESSION-GAP",
+  "after_pass": "3-hypotheses",
+  "finding_type": "HYPOTHESIS",
+  "qualifier": "",
+  "subject": "H5",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN",
+  "reason": "H5 attributes the escape to regression selection, but the engine-derived regression-selection gap is UNCERTAIN (it needs a test classified DETECTING that was not run); set to UNKNOWN."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "G-CITATION-UNRESOLVED",
+  "after_pass": "3-hypotheses",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "H6",
+  "subject": "",
+  "original": "monitoring-alerts.md",
+  "corrected": "",
+  "reason": "'H6' cited 'monitoring-alerts.md', which names no evidence collected for this assessment (or an identifier the evidence it names does not hold); removed from its citations. Remaining: none."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "G-EVIDENCE-REF",
+  "after_pass": "3-hypotheses",
+  "finding_type": "LOOP_ACTIVITY_FINDING",
+  "qualifier": "H6",
+  "subject": "",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "UNKNOWN",
+  "reason": "'H6' was STRONGLY SUPPORTED without any evidence reference that checks out against the case artifacts; downgraded to UNKNOWN."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-POST-RELEASE-ONLY",
+  "after_pass": "3-hypotheses",
+  "finding_type": "HYPOTHESIS",
+  "qualifier": "",
+  "subject": "H7",
+  "original": "STRONGLY SUPPORTED",
+  "corrected": "POSSIBLE CONTRIBUTING FACTOR",
+  "reason": "H7 is supported only by evidence produced after release (remediation_changes); that shows what was learned, not what was knowable before release. Lowered to POSSIBLE CONTRIBUTING FACTOR."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-PROPOSAL-BASIS",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "T3",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal T3: none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-PROPOSAL-BASIS",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "C3",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal C3: none of the hypotheses it addresses is SUPPORTED after checks; treat as exploratory, not as a fix for an established gap."
+ },
+ {
+  "step": "3-hypotheses",
+  "guard_id": "H-VAGUE-ACTION",
+  "after_pass": "3-hypotheses",
+  "finding_type": "PROPOSAL",
+  "qualifier": "",
+  "subject": "C4",
+  "original": "",
+  "corrected": "",
+  "reason": "proposal C4: uses vague wording the methodology rejects: improve testing, add more test cases."
+ }
+]

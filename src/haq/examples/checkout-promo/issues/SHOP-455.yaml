@@ -1,0 +1,23 @@
+# FICTIONAL. Originating story.
+key: SHOP-455
+type: Story
+title: Apply promo codes on the cart page
+status: Done
+priority: Medium
+created: 2026-02-02T10:00:00Z
+resolved: 2026-03-03T16:00:00Z
+fix_versions: [4.2.0]
+components: [checkout]
+description: |
+  Customers can enter a promo code on the cart page instead of only at payment.
+acceptance_criteria:
+  - A valid percentage code reduces the cart subtotal by its percentage.
+  - An expired code is rejected with a message.
+  - The applied code is still shown after the page is reloaded.
+comments:
+  - at: 2026-02-26T14:20:00Z
+    author_role: QA engineer
+    body: What should happen to the discount if the customer changes a quantity after applying a code? Not covered by the acceptance criteria.
+  - at: 2026-03-03T15:55:00Z
+    author_role: Developer
+    body: "Merged in PR #318. Unit tests added for valid and expired codes."

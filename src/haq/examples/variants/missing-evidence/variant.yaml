@@ -1,0 +1,9 @@
+# FICTIONAL variant of checkout-promo: the same scripted answers are checked against
+# less and different evidence, to show how the deterministic checks respond.
+description: >-
+  The test-management export and the CI test results were not provided, the production
+  issue record no longer lists its link to the originating story, and the release record's
+  approval note no longer mentions the uncovered condition.
+remove:
+  - tests.md
+  - test-results/ci-unit.xml
