@@ -31,7 +31,8 @@ answer supplies for them is overwritten (tested in `tests/test_boundary.py`).
 | Citation / link / quote / relevance checks | Engine guards + `haq.hypotheses` | Yes | Scripted answers, fictional case and variant |
 | Hypotheses, confidence, proposals | Answer source | No — checked for provenance only | Scripted and mocked answers |
 | Methodology rules not listed below (for example "name what worked", "separate pre- and post-release knowledge") | Prompt text and `SKILL.md` | No — instructions | Not testable deterministically |
-| Accept / reject / investigate | A person, in `decisions.yaml` | Only a person | — |
+| Accept / reject / investigate | A person, in `decisions.yaml` | Only a person; the tool never overwrites it and binds it to `result_sha256` | Fictional runs |
+| Exchange answer binding | `haq.providers.ExchangeProvider` | Yes | Fictional runs |
 
 ## Rules applied by code
 
@@ -61,6 +62,11 @@ Added by this skill (`src/haq/hypotheses.py`):
 | H-LAYER | The causal layer must be one of the methodology's six |
 | H-PROPOSAL-BASIS | A proposal that addresses no SUPPORTED hypothesis, or an unknown hypothesis ID, is flagged |
 | H-VAGUE-ACTION | The methodology's action-quality filter applied as a phrase list |
+
+Before any of these rules runs, every answer is validated (`answer_problems`): confidence
+values and activity statuses must be in the methodology's vocabulary (case and spacing aside),
+and hypothesis and proposal IDs must be present and unique. An invalid answer is rejected — a
+model gets one repair request, a saved answer is not used — never classified.
 
 The report groups hypotheses as SUPPORTED (a verified supporting quote and not at the
 weakest level), CONTRADICTED (a verified contradicting quote) or NOT ESTABLISHED.

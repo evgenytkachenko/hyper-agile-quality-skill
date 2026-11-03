@@ -25,8 +25,10 @@ and 9,900 tokens for the three steps (before the answer); real cases are larger.
 ## Behavior
 
 - Each step sends one chat request with the step's JSON Schema as Ollama's `format`.
-- An answer that does not match the schema gets one repair request; a second failure stops
-  the run (the raw answer is kept under `raw/`).
+- An answer that does not match the schema, or uses a confidence or status outside the
+  methodology's set, gets one repair request; a second failure stops the run.
+- Every attempt is written to `raw/<step>.attempt-<n>.txt` (masked) before it is validated, so
+  failed attempts are kept.
 - An answer cut off at the output limit is never used.
 - A loopback endpoint is contacted without any proxy from the environment (engine behavior).
 - `localhost.example.com` and similar names are not treated as local.

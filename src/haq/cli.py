@@ -9,6 +9,7 @@ from pathlib import Path
 
 from . import ENGINE_SOURCE_COMMIT, __version__
 from ._engine.errors import HyperAgileError
+from ._engine.masking import mask_text
 
 EXAMPLES = Path(__file__).parent / "examples"
 DEMO_CASE = EXAMPLES / "checkout-promo"
@@ -51,25 +52,31 @@ def _provider(args):
                        think=None if think is None else think.lower() in {"1", "true", "yes"})
 
 
-def _run(case: Path, provider, out: Path, variant: Path | None, overwrite: bool, context_tokens: int | None) -> int:
+def _say(text: str) -> None:
+    print(mask_text(text))
+
+
+def _run(case: Path, provider, out: Path, variant: Path | None, overwrite: bool, context_tokens: int | None,
+         archive_decisions: bool = False) -> int:
     from .investigate import prepare_out_dir, run_investigation, write_outputs
     from .providers import AwaitingAnswer
 
-    prepare_out_dir(out, overwrite or provider.name == "exchange")
+    for note in prepare_out_dir(out, overwrite, archive_decisions):
+        _say(note)
     try:
         inv = run_investigation(case, provider, variant_dir=variant, out_dir=out, context_tokens=context_tokens)
     except AwaitingAnswer as exc:
-        print(str(exc))
+        _say(str(exc))
         return 3
     paths = write_outputs(inv, out)
     hyp = inv.hypotheses
     counts = {s: sum(h.check_status == s for h in hyp.hypotheses) for s in ("SUPPORTED", "CONTRADICTED", "NOT ESTABLISHED")}
-    print(f"Answers: {inv.provider_label}")
-    print(f"Hypotheses after checks: {counts['SUPPORTED']} supported, {counts['CONTRADICTED']} contradicted, "
-          f"{counts['NOT ESTABLISHED']} not established; {len(inv.checks)} check note(s).")
-    print(f"Regression-selection gap (derived): {inv.validation.regression_selection_gap}")
+    _say(f"Answers: {inv.provider_label}")
+    _say(f"Hypotheses after checks: {counts['SUPPORTED']} supported, {counts['CONTRADICTED']} contradicted, "
+         f"{counts['NOT ESTABLISHED']} not established; {len(inv.checks)} check note(s).")
+    _say(f"Regression-selection gap (derived): {inv.validation.regression_selection_gap}")
     for name, path in paths.items():
-        print(f"  {name:9} {path}")
+        _say(f"  {name:9} {path}")
     return 0
 
 
@@ -84,7 +91,8 @@ def cmd_demo(args) -> int:
             raise HyperAgileError(f"Unknown variant '{args.variant}'. Available: {names}")
     out = Path(args.out or ("haq-demo" + (f"-{args.variant}" if args.variant else "")))
     print("Running the fictional demo with SCRIPTED responses (no model is called).")
-    return _run(DEMO_CASE, ScriptedProvider(DEMO_RESPONSES), out, variant, args.overwrite, None)
+    return _run(DEMO_CASE, ScriptedProvider(DEMO_RESPONSES), out, variant, args.overwrite, None,
+                args.archive_decisions)
 
 
 def cmd_investigate(args) -> int:
@@ -93,24 +101,33 @@ def cmd_investigate(args) -> int:
         provider.check_ready()
     ctx = int(args.context_tokens or _env("HAQ_CONTEXT_TOKENS", "16384")) if provider.name == "ollama" else None
     return _run(Path(args.case), provider, Path(args.out), Path(args.variant) if args.variant else None,
-                args.overwrite, ctx)
+                args.overwrite, ctx, args.archive_decisions)
 
 
 def cmd_check_case(args) -> int:
     from .adapters import load_evidence
 
     case = load_evidence(Path(args.case), Path(args.variant) if args.variant else None)
-    print(f"Case {case.bundle.case_id}: {len(case.bundle.artifacts())} evidence artifact(s); no model was called.")
+    _say(f"Case {case.bundle.case_id}: {len(case.bundle.artifacts())} evidence artifact(s); no model was called.")
     for a in case.bundle.artifacts():
-        print(f"  [{a.ref}] {a.category} ({len(a.content)} chars)")
+        _say(f"  [{a.ref}] {a.category} ({len(a.content)} chars)")
     if case.relationships:
         print("Recorded relationships:")
         for r in case.relationships:
-            print(f"  {r['source']} -> {r['target']} ({r['relationship_type']})")
+            _say(f"  {r['source']} -> {r['target']} ({r['relationship_type']})")
     print("Limitations:" if case.bundle.limitations else "Limitations: none")
     for l in case.bundle.limitations:
-        print(f"  - {l}")
+        _say(f"  - {l}")
     return 0
+
+
+def cmd_check_decisions(args) -> int:
+    from .investigate import check_decisions
+
+    ok, lines = check_decisions(Path(args.out))
+    for line in lines:
+        _say(line)
+    return 0 if ok else 1
 
 
 def cmd_compare(args) -> int:
@@ -172,6 +189,12 @@ def cmd_doctor(args) -> int:
     return 0 if ok else 1
 
 
+OVERWRITE_HELP = ("Replace a finished run's report, results, checks, run record and raw attempts. "
+                  "Never overwrites decisions.yaml.")
+ARCHIVE_HELP = ("If decisions.yaml may hold a person's decisions, rename it to decisions.superseded-<result>.yaml "
+                "and start a fresh one. Without this flag such a run is refused.")
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="haq", description="Hyper-Agile Quality Skill: evidence-checked escaped-defect investigation.")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -180,7 +203,8 @@ def build_parser() -> argparse.ArgumentParser:
     d = sub.add_parser("demo", help="Run the fictional case with scripted responses (no model).")
     d.add_argument("--variant", help="Apply a bundled evidence variant, e.g. missing-evidence.")
     d.add_argument("--out", help="Output folder (default haq-demo[-variant]).")
-    d.add_argument("--overwrite", action="store_true")
+    d.add_argument("--overwrite", action="store_true", help=OVERWRITE_HELP)
+    d.add_argument("--archive-decisions", action="store_true", help=ARCHIVE_HELP)
     d.set_defaults(func=cmd_demo)
 
     i = sub.add_parser("investigate", help="Investigate a case folder.")
@@ -193,13 +217,18 @@ def build_parser() -> argparse.ArgumentParser:
     i.add_argument("--base-url", help=f"Ollama URL (default $HAQ_OLLAMA_URL or {DEFAULT_OLLAMA_URL}).")
     i.add_argument("--context-tokens", type=int, help="Context window requested from Ollama (default 16384).")
     i.add_argument("--allow-remote", action="store_true", help="Allow a non-loopback model endpoint.")
-    i.add_argument("--overwrite", action="store_true")
+    i.add_argument("--overwrite", action="store_true", help=OVERWRITE_HELP)
+    i.add_argument("--archive-decisions", action="store_true", help=ARCHIVE_HELP)
     i.set_defaults(func=cmd_investigate)
 
     c = sub.add_parser("check-case", help="Load and list a case's evidence without any model.")
     c.add_argument("case")
     c.add_argument("--variant")
     c.set_defaults(func=cmd_check_case)
+
+    k = sub.add_parser("check-decisions", help="Check that decisions.yaml reviews the result in an output folder.")
+    k.add_argument("out")
+    k.set_defaults(func=cmd_check_decisions)
 
     m = sub.add_parser("compare", help="Compare two investigation outputs.")
     m.add_argument("a")
@@ -225,7 +254,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except HyperAgileError as exc:
-        print(f"Error: {exc}", file=sys.stderr)
+        print(f"Error: {mask_text(str(exc))}", file=sys.stderr)
         return 2
 
 

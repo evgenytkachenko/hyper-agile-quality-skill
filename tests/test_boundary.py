@@ -18,7 +18,7 @@ from haq.cli import DEMO_CASE, DEMO_RESPONSES
 from haq.hypotheses import Hypothesis, QualityInvestigation, Quote, check_investigation
 from haq.investigate import METHODOLOGY_DIR, run_investigation
 from haq.prompts import STEPS, system_prompt, user_prompt
-from haq.providers import AwaitingAnswer, ExchangeProvider, ScriptedProvider, make_ollama
+from haq.providers import ScriptedProvider, make_ollama
 from haq.report import render_report
 
 ANSWERS = json.loads(DEMO_RESPONSES.read_text(encoding="utf-8"))["responses"]
@@ -195,27 +195,7 @@ def test_missing_model_name_is_refused():
         make_ollama("http://localhost:11434", "")
 
 
-# ------------------------------------------------------------------ agent exchange
-
-
-def test_exchange_provider_round_trip(tmp_path):
-    folder = tmp_path / "exchange"
-    with pytest.raises(AwaitingAnswer):
-        run_investigation(DEMO_CASE, ExchangeProvider(folder))
-    assert (folder / "1-trace.prompt.md").is_file()
-    for step in STEPS:
-        (folder / f"{step.key}.answer.json").write_text(json.dumps(ANSWERS[step.key]), encoding="utf-8")
-    inv = run_investigation(DEMO_CASE, ExchangeProvider(folder))
-    report = render_report(inv)
-    assert "AGENT ANSWERS" in report and "[AGENT]" in report
-
-
-def test_exchange_invalid_answer_is_reported_not_retried(tmp_path):
-    folder = tmp_path / "exchange"
-    folder.mkdir()
-    (folder / "1-trace.answer.json").write_text('{"production_problem": "only this"}', encoding="utf-8")
-    with pytest.raises(PassOutputError, match="saved answer for step 1-trace"):
-        run_investigation(DEMO_CASE, ExchangeProvider(folder))
+# Agent exchange tests are in tests/test_exchange.py.
 
 
 # ------------------------------------------------------------------ prompts reuse the engine

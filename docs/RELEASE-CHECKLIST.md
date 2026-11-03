@@ -1,6 +1,7 @@
 # Before publishing
 
-This candidate has not been published. These decisions belong to the copyright holder.
+This candidate has been pushed as the branch `candidate/v0.1` but not released. These decisions belong to the
+copyright holder.
 
 - [ ] **License.** None is chosen. Without one, the code is not open source. Choose a license
       for the code and decide whether the methodology files and documentation use the same one.

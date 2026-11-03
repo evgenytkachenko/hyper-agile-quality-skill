@@ -241,4 +241,4 @@ Record decisions in `decisions.yaml` next to this report. This tool never marks 
 | `junit:ci-unit` | ci_evidence | test-results/ci-unit.xml | 10a0cfef5ab9 |
 | `release:4.2.0` | release_evidence | releases/4.2.0.yaml | 07b502921442 |
 | `production-learning.md` | production_evidence | production-learning.md | 0aa161306be8 |
-| `adapter:relationships` | additional_evidence | recorded-relationships.md | derived |
+| `adapter:relationships` | additional_evidence | derived:recorded-relationships.md | derived |

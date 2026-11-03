@@ -1,13 +1,30 @@
 {
  "tool": "hyper-agile-quality-skill 0.1.0",
  "engine_source_commit": "88b9b9f",
- "finished_at": "2026-11-03T16:41:51+00:00",
+ "finished_at": "2026-11-03T17:31:46+00:00",
  "case_id": "checkout-promo+missing-evidence",
  "variant": "missing-evidence",
  "answers": {
   "provider": "scripted",
   "label": "SCRIPTED RESPONSES (not a model)",
-  "model": "scripted:checkout-promo.responses.json"
+  "model": "scripted:checkout-promo.responses.json",
+  "accepted_sha256": {
+   "1-trace": "fb4d175bacf7e37ad07260e929eadb336c0c36d862a4d32e19cb6f982f0aa3b4",
+   "2-validation": "5a76da9dcc4165bc306066f866d09b18dc6aff2438cf4e03b8877cdff5d81a28",
+   "3-hypotheses": "d6d5c657d55b6ff046fe5fba9792f640472cddb00582bb9f987238a208d184ba"
+  },
+  "attempt_files": {
+   "1-trace": [
+    "raw/1-trace.attempt-1.txt"
+   ],
+   "2-validation": [
+    "raw/2-validation.attempt-1.txt"
+   ],
+   "3-hypotheses": [
+    "raw/3-hypotheses.attempt-1.txt"
+   ]
+  },
+  "exchange_bindings": {}
  },
  "methodology_sha256": {
   "SKILL.md": "788352b7bf4e7ece663c094e11f9dcfc28cc177ac30c33b664e61a7604f25318",
@@ -28,6 +45,8 @@
   "production-learning.md": "0aa161306be867f8d8fe70a84a0e0caab8943a6eac77ad67adf6273032a2f4ef",
   "releases/4.2.0.yaml": "36313cbdfb638fa87ea5da2037f5a26a0c8b498e8e5f7b3df7af0afdb48ee3d8"
  },
+ "result_sha256": "a22f868a391572f66dcdba761354065470f2122dcb00cf9f2be37e8e2bb9fc93",
  "report_sha256": "4bd2afd82667cfaa1643f163d40f5464fc6d425e94eea5974043302ddd917af6",
+ "decisions_template_sha256": "c78e7a3a9bb0f1aa811890b14db760d4ecd2c97e16468afd605265c0bd3c6eef",
  "warnings": []
 }

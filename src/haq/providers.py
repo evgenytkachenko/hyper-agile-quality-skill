@@ -14,6 +14,7 @@ code cannot tell them apart; the report and run record always say which one was 
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -61,8 +62,29 @@ class ScriptedProvider(ModelProvider):
         return answer if isinstance(answer, str) else json.dumps(answer)
 
 
+class StaleAnswer(ProviderError):
+    """A saved exchange answer is not bound to the request it is being used for."""
+
+    kind = "stale_answer"
+
+
+def request_binding(step: str, system_prompt: str, user_prompt: str, json_schema: dict | None, inputs: dict) -> str:
+    """Digest of exactly what an answer is an answer to.
+
+    The user prompt already contains the evidence, its index and limitations, the case title and the checked results
+    of earlier steps; `inputs` adds the evidence file hashes, methodology hashes, tool version and the digest of every
+    earlier accepted answer, so that a changed earlier answer invalidates every later one even if its checked result
+    happens to read the same."""
+    payload = {"step": step, "system": system_prompt, "user": user_prompt, "schema": json_schema, "inputs": inputs}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
 class ExchangeProvider(ModelProvider):
-    """Writes <dir>/<step>.prompt.md and reads <dir>/<step>.answer.json."""
+    """File exchange with an agent, one step at a time.
+
+    For each step it writes <dir>/<step>.prompt.md and <dir>/<step>.request.json (which holds the binding), and reads
+    <dir>/<step>.answer.json, which must be {"binding": "<the binding>", "answer": {...}}. An answer without the
+    current binding is refused, never used; the files are left as they are for the person or agent to replace."""
 
     name = "exchange"
     location = EXTERNAL  # the agent's own model may be anywhere
@@ -73,6 +95,8 @@ class ExchangeProvider(ModelProvider):
         self.folder.mkdir(parents=True, exist_ok=True)
         self.model = "agent-exchange"
         self.current_step = ""
+        self.binding_inputs: dict = {}
+        self.bindings: dict[str, str] = {}
 
     def list_models(self) -> list[str]:
         return [self.model]
@@ -81,14 +105,36 @@ class ExchangeProvider(ModelProvider):
         return None
 
     def generate(self, system_prompt: str, user_prompt: str, *, json_schema: dict | None = None) -> str:
-        prompt = self.folder / f"{self.current_step}.prompt.md"
-        answer = self.folder / f"{self.current_step}.answer.json"
-        prompt.write_text(f"<!-- system -->\n{system_prompt}\n\n<!-- user -->\n{user_prompt}\n", encoding="utf-8")
+        step = self.current_step
+        binding = request_binding(step, system_prompt, user_prompt, json_schema, self.binding_inputs)
+        prompt = self.folder / f"{step}.prompt.md"
+        answer = self.folder / f"{step}.answer.json"
+        wrapper = f'{{"binding": "{binding}", "answer": <one JSON object matching the schema>}}'
+        prompt.write_text(
+            f"<!-- haq exchange: step {step}; binding {binding} -->\n"
+            f"<!-- Save {answer.name} as exactly: {wrapper} -->\n\n"
+            f"<!-- system -->\n{system_prompt}\n\n<!-- user -->\n{user_prompt}\n", encoding="utf-8")
+        (self.folder / f"{step}.request.json").write_text(
+            json.dumps({"step": step, "binding": binding, "inputs": self.binding_inputs}, indent=1) + "\n",
+            encoding="utf-8")
         if not answer.is_file():
             raise AwaitingAnswer(
-                f"Waiting for an answer to step '{self.current_step}'. Read {prompt}, save one JSON object to "
-                f"{answer}, then run the same command again.")
-        return answer.read_text(encoding="utf-8")
+                f"Waiting for an answer to step '{step}'. Read {prompt}, save {answer} as {wrapper} "
+                "(binding is in the prompt's first line), then run the same command again.")
+        try:
+            saved = json.loads(answer.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise StaleAnswer(f"{answer} is not readable JSON ({type(exc).__name__}). Save it as {wrapper}.") from exc
+        if not isinstance(saved, dict) or "binding" not in saved or "answer" not in saved:
+            raise StaleAnswer(f"{answer} has no binding. Save it as {wrapper}; an answer that does not say which "
+                              "request it answers is not used.")
+        if saved["binding"] != binding:
+            raise StaleAnswer(
+                f"{answer} was written for a different request (binding {str(saved['binding'])[:12]}…, current "
+                f"{binding[:12]}…): the evidence, prompt, schema or an earlier step's answer has changed. Move or "
+                f"delete it (answers for later steps will be stale too) and answer the new prompt in {prompt}.")
+        self.bindings[step] = binding
+        return json.dumps(saved["answer"], ensure_ascii=False)
 
 
 def make_ollama(base_url: str, model: str, *, allow_remote: bool = False, temperature: float = 0.1,

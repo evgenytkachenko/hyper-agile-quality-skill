@@ -1,6 +1,9 @@
 # Human decisions for this investigation. Nothing here is filled in by the tool.
 # For each item set decision to one of: accept, reject, investigate. Add who decided (a role) and why.
+# These decisions apply only to the result named by result_sha256. If the evidence or the answers change,
+# the result changes and `haq check-decisions` reports these decisions as not applying to it.
 case: checkout-promo+missing-evidence
+result_sha256: a22f868a391572f66dcdba761354065470f2122dcb00cf9f2be37e8e2bb9fc93
 hypotheses:
   H1:
     checked_status: SUPPORTED

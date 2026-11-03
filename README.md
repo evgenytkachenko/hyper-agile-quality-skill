@@ -77,7 +77,19 @@ release note, with identical answers (excerpt of [docs/sample-output/comparison.
 
 Each run writes `report.md`, `results.json` (answers as given and after checks),
 `checks.json` (every rule that changed something), `run.json` (provenance and file hashes)
-and `decisions.yaml` (empty, for a person to fill in).
+and `decisions.yaml` (empty, for a person to fill in, bound to this exact result), plus `raw/`
+with every answer attempt as received (masked), including attempts that failed validation.
+
+## Output folders and human decisions
+
+- A new or empty `--out` folder is used and marked as a haq output folder. Other non-empty folders are refused.
+- An unfinished run (for example a step-by-step agent exchange) can be continued in the same folder.
+- A finished run is replaced only with `--overwrite`, which replaces the report, results, checks, run record
+  and raw attempts. It never overwrites `decisions.yaml`.
+- If `decisions.yaml` differs from the template the tool wrote, the run is refused and nothing is changed.
+  `--archive-decisions` renames it to `decisions.superseded-<result>.yaml` and starts a fresh one.
+- `decisions.yaml` names the `result_sha256` it reviews. `haq check-decisions <out>` fails when the
+  decisions do not belong to the result in that folder, so changed evidence never inherits an old approval.
 
 ## Investigate your own case
 
@@ -102,7 +114,10 @@ The skill tells the agent how to build the case folder, which answer source to u
 explain the report, and that it must stay read-only and leave decisions to people. Those
 are **instructions**: unlike the checks in `haq`, nothing enforces them. With
 `--answers-dir`, the agent itself answers the three steps and its answers go through the
-same checks (the evidence then reaches whatever model runs the agent — ask first).
+same checks (the evidence then reaches whatever model runs the agent — ask first). Each answer
+file must be `{"binding": "<digest from the prompt>", "answer": {...}}`; the binding covers the
+exact request, the evidence files, the methodology and every earlier answer, so an answer
+written for different evidence or after an earlier answer changed is refused, not reused.
 
 ## Supported evidence (connectors)
 
@@ -117,7 +132,11 @@ same checks (the evidence then reaches whatever model runs the agent — ask fir
 | Export through an agent's own tools | Instructions only (SKILL.md) | Not tested |
 
 No live service was contacted in developing or testing this project. Credential-like strings
-are masked with the engine's rules before evidence reaches a model or an output file. See
+in free text (titles, descriptions, comments, notes, test messages and all answers) are masked
+with the engine's rules before they reach a model, an output file or a message. Identifiers
+(file paths, case and variant IDs, issue keys, link fields, release versions) that look like
+credentials are refused instead, because a masked identifier could collide with another. Every
+evidence ID and file name must be unique, case aside. See
 [docs/connectors.md](docs/connectors.md).
 
 ## Local model configuration
@@ -158,9 +177,12 @@ See [docs/architecture.md](docs/architecture.md) for every rule and where it com
 pytest
 ```
 
-43 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
+101 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
 the boundary between answers and checks (engine-set fields ignored, mocked Ollama including
-repair, cut-off and locality cases, agent exchange), CLI behavior and vendored-file hashes.
+repair, cut-off and locality cases), exchange bindings (changed evidence, changed earlier
+answers), decision protection, secret handling at every input and output, answer vocabulary,
+duplicate IDs, ambiguous evidence identities, retained failed attempts, CLI behavior and
+vendored-file hashes.
 Behavior is verified with fictional fixtures, scripted answers and mocked model traffic only.
 
 ## Limitations
@@ -173,8 +195,9 @@ Behavior is verified with fictional fixtures, scripted answers and mocked model 
 - Long artifacts are truncated (20,000 characters each) and the cut is reported.
 - A single fictional case and one variant are included; they show behavior, not usefulness on
   real incidents.
-- Small local models may fail the JSON schemas; one repair attempt is made, then the run stops
-  and keeps the raw answer.
+- Small local models may fail the JSON schemas or the confidence vocabulary; one repair attempt
+  is made, then the run stops. Every attempt is kept (masked) under `raw/`.
+- Masking uses the engine's patterns; a credential in a format they do not recognize is not masked.
 
 ## Relationship to the book
 

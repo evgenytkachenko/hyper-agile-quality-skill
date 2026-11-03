@@ -26,3 +26,16 @@ def by_id(inv, hid):
 
 def rules(inv, subject=None):
     return {c["guard_id"] for c in inv.checks if subject is None or c.get("subject") == subject}
+
+
+def bind_answer(folder, step, answer):
+    """Save an exchange answer bound to the request the provider last wrote for this step."""
+    import json
+
+    binding = json.loads((folder / f"{step}.request.json").read_text(encoding="utf-8"))["binding"]
+    (folder / f"{step}.answer.json").write_text(json.dumps({"binding": binding, "answer": answer}), encoding="utf-8")
+
+
+def secret_token() -> str:
+    """A synthetic, credential-shaped value built at runtime. Not a real credential."""
+    return "ghp_" + "Zx9" * 12

@@ -221,11 +221,13 @@ def render_report(inv) -> str:
     return "\n".join(out).rstrip() + "\n"
 
 
-def decisions_template(inv) -> str:
+def decisions_template(inv, result_sha256: str) -> str:
     hyp = inv.hypotheses
     lines = ["# Human decisions for this investigation. Nothing here is filled in by the tool.",
              "# For each item set decision to one of: accept, reject, investigate. Add who decided (a role) and why.",
-             f"case: {inv.case.bundle.case_id}", "hypotheses:"]
+             "# These decisions apply only to the result named by result_sha256. If the evidence or the answers change,",
+             "# the result changes and `haq check-decisions` reports these decisions as not applying to it.",
+             f"case: {inv.case.bundle.case_id}", f"result_sha256: {result_sha256}", "hypotheses:"]
     for h in hyp.hypotheses:
         lines += [f"  {h.id}:", f"    checked_status: {h.check_status}", "    decision: null", "    decided_by_role: null",
                   "    reason: null"]

@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 
 from ._engine import guards
 from ._engine.claim_evidence import EvidenceLink, bind_claims
+from ._engine.errors import PassOutputError
 from ._engine.evidence import EvidenceBundle
 from ._engine.guards import GuardNote, norm
 from ._engine.passes import ENGINE_SET, TraceabilityResult, ValidationAssessment
@@ -158,6 +159,14 @@ def check_investigation(inv: QualityInvestigation, bundle: EvidenceBundle, level
     signal_ids = guards.verified_signal_ids(trace, bundle)
     notes: list[GuardNote] = []
 
+    # Nothing is classified from an answer whose vocabulary or IDs are invalid.
+    problems = answer_problems(inv, levels)
+    if problems:
+        raise PassOutputError("The hypotheses answer cannot be classified: " + "; ".join(problems))
+    canonical = {norm(level): level for level in levels}
+    for h in inv.hypotheses:
+        h.confidence = canonical[norm(h.confidence)]
+
     # Engine-set fields are never accepted from an answer.
     for h in inv.hypotheses:
         h.cited_sources = [q.source for q in h.supporting]
@@ -257,3 +266,48 @@ def check_investigation(inv: QualityInvestigation, bundle: EvidenceBundle, level
 
 
 ROOT_CAUSE = re.compile(r"\broot[- ]cause\b", re.I)
+
+# Activity statuses the methodology allows in addition to the confidence levels.
+ACTIVITY_EXTRA = ("NOT APPLICABLE", guards.ACTIVITY_UNKNOWN)
+
+
+def answer_problems(value: BaseModel, levels: list[str]) -> list[str]:
+    """Vocabulary and identity problems that make an answer unusable, found before any classification.
+
+    A confidence or status outside the methodology's set is rejected, never read as some level: an unknown word
+    must not be classified as supported. Duplicate hypothesis or proposal IDs are rejected because decisions,
+    proposals and comparisons refer to items by ID."""
+    allowed = {norm(level) for level in levels}
+    activity_allowed = allowed | {norm(x) for x in ACTIVITY_EXTRA}
+    problems: list[str] = []
+
+    def check(label: str, given: str, vocabulary: set[str]) -> None:
+        if norm(given) not in vocabulary:
+            problems.append(f"{label}: '{given}' is not one of {', '.join(sorted(vocabulary))}")
+
+    if isinstance(value, TraceabilityResult):
+        for n, link in enumerate(value.links, start=1):
+            check(f"links[{n}].confidence", link.confidence, allowed)
+        for n, signal in enumerate(value.critical_signals, start=1):
+            check(f"critical_signals[{n}].confidence", signal.confidence, allowed)
+    elif isinstance(value, ValidationAssessment):
+        for n, activity in enumerate(value.activities, start=1):
+            check(f"activities[{n}].status", activity.status, activity_allowed)
+        for n, test in enumerate(value.test_relevance, start=1):
+            check(f"test_relevance[{n}].confidence", test.confidence, allowed)
+    elif isinstance(value, QualityInvestigation):
+        seen: dict[str, int] = {}
+        for n, h in enumerate(value.hypotheses, start=1):
+            check(f"hypotheses[{n}] ({h.id}).confidence", h.confidence, allowed)
+            seen[h.id.strip()] = seen.get(h.id.strip(), 0) + 1
+        ids = [p.id.strip() for p in (*value.proposed_regression_tests, *value.proposed_controls)]
+        for kind, counts in (("hypothesis", seen), ("proposal", {i: ids.count(i) for i in ids})):
+            for item, count in counts.items():
+                if not item:
+                    problems.append(f"a {kind} has an empty ID")
+                elif count > 1:
+                    problems.append(f"{kind} ID '{item}' is used {count} times")
+        overlap = set(seen) & set(ids)
+        if overlap:
+            problems.append(f"IDs used for both a hypothesis and a proposal: {', '.join(sorted(overlap))}")
+    return problems

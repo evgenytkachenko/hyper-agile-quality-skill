@@ -1,13 +1,30 @@
 {
  "tool": "hyper-agile-quality-skill 0.1.0",
  "engine_source_commit": "88b9b9f",
- "finished_at": "2026-11-03T16:41:51+00:00",
+ "finished_at": "2026-11-03T17:31:46+00:00",
  "case_id": "checkout-promo",
  "variant": "",
  "answers": {
   "provider": "scripted",
   "label": "SCRIPTED RESPONSES (not a model)",
-  "model": "scripted:checkout-promo.responses.json"
+  "model": "scripted:checkout-promo.responses.json",
+  "accepted_sha256": {
+   "1-trace": "fb4d175bacf7e37ad07260e929eadb336c0c36d862a4d32e19cb6f982f0aa3b4",
+   "2-validation": "5a76da9dcc4165bc306066f866d09b18dc6aff2438cf4e03b8877cdff5d81a28",
+   "3-hypotheses": "d6d5c657d55b6ff046fe5fba9792f640472cddb00582bb9f987238a208d184ba"
+  },
+  "attempt_files": {
+   "1-trace": [
+    "raw/1-trace.attempt-1.txt"
+   ],
+   "2-validation": [
+    "raw/2-validation.attempt-1.txt"
+   ],
+   "3-hypotheses": [
+    "raw/3-hypotheses.attempt-1.txt"
+   ]
+  },
+  "exchange_bindings": {}
  },
  "methodology_sha256": {
   "SKILL.md": "788352b7bf4e7ece663c094e11f9dcfc28cc177ac30c33b664e61a7604f25318",
@@ -30,6 +47,8 @@
   "test-results/ci-unit.xml": "10a0cfef5ab97679514173f1c10bc39aee4d01567e549dae73ef5c40ccf28047",
   "tests.md": "9d41e68a3681fa311357abfd5f859b6e76f935501b328b0568159b472a4b491f"
  },
- "report_sha256": "9e01f287e15c720db8921acf9fc12a715538c73fb6a579f456f3e8b54dc97c29",
+ "result_sha256": "9d5599eac7b7ffbf3f4db119440375c0a50bacd998eb91404836c78b7daefad4",
+ "report_sha256": "796cf45d570c60494f9ab0e75de552797c9097f7d3d13c2bdac7664a4a7e21be",
+ "decisions_template_sha256": "97bdbeb8a1a657526cfadefdca1a98799bf6dab53d1ef452e6bdcfe318066bbb",
  "warnings": []
 }

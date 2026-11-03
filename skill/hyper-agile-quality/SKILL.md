@@ -66,8 +66,12 @@ Missing evidence is a limitation to report, not a reason to stop.
    uses Ollama on this machine (`HAQ_OLLAMA_URL`, default `http://localhost:11434`).
    The tool never downloads a model. Check with `haq doctor --ollama`.
 2. **You as the model:** `haq investigate <folder> --out <dir> --answers-dir <dir>/exchange`
-   writes each step's prompt to the exchange folder and stops. Read the prompt, save one
-   JSON object as `<step>.answer.json`, and run the same command again (three steps).
+   writes each step's prompt to the exchange folder and stops. Read the prompt; its first
+   line holds the step's binding. Save `<step>.answer.json` as
+   `{"binding": "<that binding>", "answer": <one JSON object matching the schema>}` and run the
+   same command again (three steps). If haq says an answer is stale, the evidence or an earlier
+   answer changed: move the stale file away and answer the new prompt — never copy the new
+   binding onto an old answer.
    The evidence is then processed by whatever model runs you; get the user's agreement
    first. Your answers go through exactly the same checks.
 3. **Demo only:** `haq demo` and `haq demo --variant missing-evidence` run a fictional case
@@ -95,7 +99,9 @@ If you add reasoning of your own, label it "agent hypothesis (not checked by haq
 
 ## Step 4 — Decisions
 
-Point the user to `decisions.yaml`. Do not fill it in. Do not open tickets, write tests or
+Point the user to `decisions.yaml`. Do not fill it in, and never delete, overwrite or
+archive it without the user's explicit request. `haq check-decisions <out>` tells whether the
+decisions belong to the result in that folder. Do not open tickets, write tests or
 change monitoring unless the user explicitly approves that specific action afterwards.
 
 ## Methodology references

@@ -51,6 +51,8 @@ MAX_FILE_BYTES = 2 * 1024 * 1024
 DEFAULT_MAX_CHARS = 20000
 STRUCTURED_DIRS = {"issues", "test-results", "releases"}
 VARIANT_MANIFEST = "variant.yaml"
+# The relationships the adapter derives are an artifact of their own; this source path is not a file in the case.
+DERIVED_RELATIONSHIPS = "derived:recorded-relationships.md"
 
 
 @dataclass
@@ -68,15 +70,28 @@ class LoadedCase:
 # ------------------------------------------------------------------ file map
 
 
+def check_identifier(kind: str, value: str) -> str:
+    """Identifiers (paths, case and variant IDs, issue keys, link fields, versions) are used as citations.
+
+    Masking one would leave a reference that can collide with another masked one, so a credential-like
+    identifier is refused instead. The message shows only the masked form."""
+    if mask_text(value) != value:
+        raise EvidenceError(
+            f"The {kind} '{mask_text(value)}' contains a credential-like value. Identifiers are used as citations "
+            "and cannot be masked without becoming ambiguous: remove the secret from the name and run again.")
+    return value
+
+
 def _read_tree(root: Path) -> dict[str, bytes]:
     if not root.is_dir():
-        raise EvidenceError(f"Case folder does not exist: {root}")
+        raise EvidenceError(f"Folder does not exist: {mask_text(str(root))}")
     files: dict[str, bytes] = {}
     for path in sorted(root.rglob("*")):
         rel = path.relative_to(root)
         if any(part.startswith(".") for part in rel.parts) or path.is_symlink():
             continue
         if path.is_file():
+            check_identifier("file path", rel.as_posix())
             if path.stat().st_size > MAX_FILE_BYTES:
                 raise EvidenceError(f"{rel} is larger than {MAX_FILE_BYTES} bytes; split or trim it.")
             files[rel.as_posix()] = path.read_bytes()
@@ -90,7 +105,7 @@ def apply_variant(files: dict[str, bytes], variant_dir: Path) -> dict[str, bytes
     out = dict(files)
     for rel in manifest.get("remove", []) or []:
         if rel not in out:
-            raise EvidenceError(f"Variant removes {rel}, which is not in the case.")
+            raise EvidenceError(f"Variant removes {mask_text(str(rel))}, which is not in the case.")
         del out[rel]
     out.update(overlay)
     return out
@@ -239,12 +254,14 @@ def load_evidence(case_dir: Path, variant_dir: Path | None = None,
     variant = ""
     if variant_dir is not None:
         files = apply_variant(files, variant_dir)
-        variant = variant_dir.name
+        variant = check_identifier("variant name", variant_dir.name)
     meta = _yaml("case.yaml", files["case.yaml"]) if "case.yaml" in files else {}
-    case_id = str(meta.get("id") or case_dir.resolve().name) + (f"+{variant}" if variant else "")
-    incident = str(meta.get("incident") or "")
+    case_id = check_identifier("case id", str(meta.get("id") or case_dir.resolve().name)) + (f"+{variant}" if variant else "")
+    incident = check_identifier("incident key", str(meta.get("incident") or ""))
     bundle = EvidenceBundle(case_id=case_id)
-    loaded = LoadedCase(bundle=bundle, title=str(meta.get("title") or ""), incident=incident, variant=variant)
+    title = str(meta.get("title") or "")
+    loaded = LoadedCase(bundle=bundle, title=mask_text(title), incident=incident, variant=variant)
+    loaded.masked += mask_text(title).count(MASK) - title.count(MASK)
     relationships: list[dict] = []
 
     def add(rel: str, category: str, content: str, evidence_id: str = "") -> None:
@@ -271,19 +288,21 @@ def load_evidence(case_dir: Path, variant_dir: Path | None = None,
             continue
         if top == "issues" and path.suffix.lower() in {".yaml", ".yml"}:
             raw = _yaml(rel, data)
-            key = str(raw.get("key") or path.stem)
+            key = check_identifier("issue key", str(raw.get("key") or path.stem))
             raw["key"] = key
             category = "production_issue" if key == incident else "originating_work"
-            add(rel, category, render_issue(raw), evidence_id=f"issue:{key}")
             for link in raw.get("links") or []:
-                relationships.append({"source": key, "target": str(link.get("target", "")),
-                                      "relationship_type": f"issue link: {link.get('relation', 'relates to')}",
+                target = check_identifier("issue link target", str(link.get("target", "")))
+                relation = check_identifier("issue link relation", str(link.get("relation", "relates to")))
+                relationships.append({"source": key, "target": target, "relationship_type": f"issue link: {relation}",
                                       "direct_or_inferred": "DIRECT"})
+            add(rel, category, render_issue(raw), evidence_id=f"issue:{key}")
         elif top == "test-results" and path.suffix.lower() == ".xml":
             add(rel, "ci_evidence", render_junit(path.name, data), evidence_id=f"junit:{path.stem}")
         elif top == "releases" and path.suffix.lower() in {".yaml", ".yml"}:
             raw = _yaml(rel, data)
-            add(rel, "release_evidence", render_release(raw), evidence_id=f"release:{raw.get('version') or path.stem}")
+            version = check_identifier("release version", str(raw.get("version") or path.stem))
+            add(rel, "release_evidence", render_release(raw), evidence_id=f"release:{version}")
         elif not top and path.suffix.lower() in SUPPORTED_SUFFIXES:
             text = data.decode("utf-8", errors="replace")
             add(rel, CATEGORY_BY_STEM.get(path.stem.lower(), FALLBACK_CATEGORY), text)
@@ -294,13 +313,24 @@ def load_evidence(case_dir: Path, variant_dir: Path | None = None,
             bundle.limitations.append(f"Skipped unsupported file: {rel}")
 
     if relationships:
-        add("recorded-relationships.md", FALLBACK_CATEGORY, render_relationships(relationships),
+        add(DERIVED_RELATIONSHIPS, FALLBACK_CATEGORY, render_relationships(relationships),
             evidence_id="adapter:relationships")
         bundle.set_relationships(relationships)
     loaded.relationships = relationships
 
     if not bundle.artifacts():
-        raise EvidenceError(f"No supported evidence found in {case_dir}.")
+        raise EvidenceError(f"No supported evidence found in {mask_text(str(case_dir))}.")
+    # Every evidence ID and file name must name exactly one artifact, case aside: the checks resolve citations by
+    # either, so a repeated basename or issue key would let one citation stand for two different files.
+    owners: dict[str, list[EvidenceArtifact]] = {}
+    for a in bundle.artifacts():
+        for identity in {a.ref.lower(), a.name.lower()}:
+            owners.setdefault(identity, []).append(a)
+    ambiguous = {k: sorted(x.source_path for x in v) for k, v in owners.items() if len(v) > 1}
+    if ambiguous:
+        detail = "; ".join(f"'{k}' names {', '.join(sorted(v))}" for k, v in sorted(ambiguous.items()))
+        raise EvidenceError(f"Ambiguous evidence identities: {detail}. Rename files or issue keys so that every "
+                            "evidence ID and file name is unique.")
     if incident and not any(a.evidence_id == f"issue:{incident}" for a in bundle.production_issue):
         bundle.limitations.append(f"case.yaml names incident {incident}, but issues/{incident}.yaml was not provided.")
     for category in CATEGORY_BY_STEM.values():
