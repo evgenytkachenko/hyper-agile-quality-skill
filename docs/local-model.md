@@ -28,7 +28,7 @@ and 9,900 tokens for the three steps (before the answer); real cases are larger.
 - An answer that does not match the schema, or uses a confidence or status outside the
   methodology's set, gets one repair request; a second failure stops the run.
 - Every attempt is recorded in `raw/<step>.attempt-<n>.json` before it is validated: the
-  decoded, sanitized answer, or for an unparseable answer only its length and the parser's reason
+  decoded, sanitized answer restricted to the step's schema fields, or for an unparseable answer only its length and the parser's reason
   (its text is not kept, because it cannot be sanitized safely). Repair prompts quote the field
   and message of each problem, never the answer's values.
 - An answer cut off at the output limit is never used.

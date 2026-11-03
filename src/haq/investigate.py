@@ -66,10 +66,11 @@ class Investigation:
         return self.results.get("3-hypotheses")  # type: ignore[return-value]
 
 
-def _record_attempt(inv: "Investigation", raw_dir: Path | None, step: str, raw: str) -> dict | None:
+def _record_attempt(inv: "Investigation", raw_dir: Path | None, step: str, raw: str,
+                    model: type[BaseModel] | None = None) -> dict | None:
     """Sanitize an answer (see sanitize.py) and keep the attempt record, before it is validated. Returns the
     sanitized object, or None when the answer could not be parsed; its text is then neither kept nor shown."""
-    clean, record = intake(raw)
+    clean, record = intake(raw, model)
     text = json.dumps({"step": step, **record}, indent=1, ensure_ascii=False) + "\n"
     inv.attempts.setdefault(step, []).append(hashlib.sha256(text.encode("utf-8")).hexdigest())
     if raw_dir is not None:
@@ -102,7 +103,8 @@ def _ask(provider: ModelProvider, inv: "Investigation", raw_dir: Path | None, st
     if hasattr(provider, "current_step"):
         provider.current_step = step.key
     where = f" Every attempt is kept, sanitized, under {raw_dir}." if raw_dir else ""
-    clean = _record_attempt(inv, raw_dir, step.key, provider.generate(system, user, json_schema=json_schema))
+    clean = _record_attempt(inv, raw_dir, step.key, provider.generate(system, user, json_schema=json_schema),
+                            step.output)
     try:
         return clean, _parse(clean, step.key, inv, step.output, levels)
     except (ValueError, ValidationError) as first:
@@ -111,7 +113,8 @@ def _ask(provider: ModelProvider, inv: "Investigation", raw_dir: Path | None, st
             raise PassOutputError(f"The saved answer for step {step.key} cannot be used: {problem}{where}") from None
         repair = (f"{user}\n\n# Your previous answer could not be used\n\n{problem}\n\n"
                   "Answer again with one JSON object that matches the schema exactly.")
-        clean = _record_attempt(inv, raw_dir, step.key, provider.generate(system, repair, json_schema=json_schema))
+        clean = _record_attempt(inv, raw_dir, step.key, provider.generate(system, repair, json_schema=json_schema),
+                                step.output)
         try:
             return clean, _parse(clean, step.key, inv, step.output, levels)
         except (ValueError, ValidationError) as second:
@@ -342,10 +345,16 @@ def check_decisions(out_dir: Path, case_dir: Path | None = None,
     except (OSError, ValueError) as exc:
         return False, [f"FAIL: run.json or results.json is missing or unreadable ({type(exc).__name__}); "
                        "no decision here can be tied to a result."]
+    if not isinstance(run, dict) or not isinstance(results, dict):
+        return False, ["FAIL: run.json or results.json does not hold a JSON object; no decision here can be tied to a "
+                       "result."]
     try:
-        data = yaml.safe_load((out_dir / DECISIONS).read_text(encoding="utf-8")) or {}
+        data = yaml.load((out_dir / DECISIONS).read_text(encoding="utf-8"), Loader=_StrictLoader) or {}
     except FileNotFoundError:
         return False, [f"FAIL: no {DECISIONS} in {out_dir}."]
+    except DuplicateKey as exc:
+        return False, [f"FAIL: {DECISIONS} repeats the key '{mask_text(str(exc))[:40]}'; a reader and this tool could "
+                       "see different decisions, so none applies. Keep one entry per key."]
     except yaml.YAMLError as exc:
         return False, [f"FAIL: {DECISIONS} is not readable YAML ({type(exc).__name__})."]
     recorded = run.get("result_sha256")
@@ -394,7 +403,12 @@ def check_decisions(out_dir: Path, case_dir: Path | None = None,
         lines = [line for line in lines if not line.startswith("OK: decisions.yaml names")]
         lines[:0] = [f"FAIL: {p}" for p in content]
         problems += content
-    lines.append(f"{len(decided)} item(s) of this result decided" + (": " + ", ".join(f"{k}={v}" for k, v in decided.items()) if decided else "."))
+    listed = ", ".join(f"{k}={v}" for k, v in decided.items())
+    if problems:
+        lines.append("0 decisions apply to this result" + (f" ({len(decided)} recorded but NOT applicable: {listed})"
+                                                            if decided else "."))
+    else:
+        lines.append(f"{len(decided)} item(s) of this result decided" + (f": {listed}" if decided else "."))
     lines.append("NOT CHECKED: the raw/ attempt records, run.json fields other than the recorded result basis and output "
                  "hashes (for example warnings and the answer-source label), and whether the installed tool and "
                  "methodology are the versions recorded in the basis.")
@@ -404,6 +418,32 @@ def check_decisions(out_dir: Path, case_dir: Path | None = None,
 
 
 DECISION_VALUES = ("accept", "reject", "investigate")
+MAX_TEXT = 2000
+
+
+class DuplicateKey(yaml.YAMLError):
+    pass
+
+
+class _StrictLoader(yaml.SafeLoader):
+    """Safe YAML that refuses a key repeated within one mapping (plain safe_load keeps the last one silently)."""
+
+
+def _no_duplicates(loader: yaml.SafeLoader, node: yaml.MappingNode, deep: bool = False) -> dict:
+    loader.flatten_mapping(node)
+    seen = set()
+    for key_node, _ in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            if key in seen:
+                raise DuplicateKey(str(key))
+            seen.add(key)
+        except TypeError:
+            pass   # unhashable keys are rejected by the base constructor below
+    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+
+_StrictLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicates)
 
 
 TOP_LEVEL_KEYS = {"case", "result_sha256", "hypotheses", "proposals"}
@@ -415,11 +455,16 @@ def _decision_content(data: object, checked: dict, case_id: str | None) -> tuple
     """The valid decisions recorded for this result's items, and every way decisions.yaml goes beyond the template
     for that result: other keys or fields, another case, unknown items, decision values outside the template's, or a
     checked status that is not the result's. Anything outside the template could be read as a wider approval."""
-    hyp = (checked.get("3-hypotheses") or {}) if isinstance(checked, dict) else {}
+    problems: list[str] = []
+    hyp = checked.get("3-hypotheses") if isinstance(checked, dict) else None
+    if not isinstance(hyp, dict) or not all(isinstance(hyp.get(k, []), list) for k in
+                                            ("hypotheses", "proposed_regression_tests", "proposed_controls")):
+        hyp = {}
+        problems.append("results.json does not hold a hypotheses result in the expected form; no decision can be "
+                        "matched to it.")
     statuses = {h.get("id"): h.get("check_status") for h in hyp.get("hypotheses") or [] if isinstance(h, dict)}
     proposals = {p.get("id") for k in ("proposed_regression_tests", "proposed_controls")
                  for p in hyp.get(k) or [] if isinstance(p, dict)}
-    problems: list[str] = []
     decided: dict[str, str] = {}
     if not isinstance(data, dict):
         return decided, [f"{DECISIONS} is not a mapping."]
@@ -451,6 +496,11 @@ def _decision_content(data: object, checked: dict, case_id: str | None) -> tuple
             decision = entry.get("decision")
             if decision is not None and decision not in DECISION_VALUES:
                 problems.append(f"{DECISIONS}: '{label}' has a decision that is not one of {', '.join(DECISION_VALUES)}.")
+            for name in ("decided_by_role", "reason"):
+                text = entry.get(name)
+                if text is not None and (not isinstance(text, str) or len(text) > MAX_TEXT):
+                    problems.append(f"{DECISIONS}: '{label}' {name} must be plain text of at most {MAX_TEXT} "
+                                    "characters, or null.")
             if section == "hypotheses" and entry.get("checked_status") != statuses[item]:
                 problems.append(f"{DECISIONS}: '{label}' records a checked status that is not this result's "
                                 f"({statuses[item]}).")

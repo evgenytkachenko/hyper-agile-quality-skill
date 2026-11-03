@@ -17,17 +17,18 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, get_args
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from ._engine.masking import MASK, mask_text
 
 # Broader than the engine's exact-name list: any key that names a credential, wherever it appears in the name.
+_SEP = r"[_.\- ]"   # separators between words in a key name: snake, kebab, dotted, spaced (camelCase needs none)
 SENSITIVE_KEY = re.compile(
-    r"(?i)(pass(?:word|wd|phrase)|(?:^|[_-])pass$|pwd|secret|token|api[_-]?key|apikey|access[_-]?key|private[_-]?key|"
-    r"credential|authori[sz]ation|(?:^|[_-])auth(?:$|[_-])|auth[_-]?header|oauth|cookie|sess(?:ion)?[_-]?id|bearer|signature|"
-    r"connection[_-]?string|(?:^|[_-])dsn$)")
+    r"(?i)(pass(?:word|wd|phrase)|(?:^|SEP)pass$|pwd|secret|token|api(?:SEP)?key|access(?:SEP)?key|"
+    r"private(?:SEP)?key|credential|authori[sz]ation|(?:^|SEP)auth(?:$|SEP)|auth(?:SEP)?header|oauth|cookie|"
+    r"sess(?:ion)?(?:SEP)?id|bearer|signature|connection(?:SEP)?string|(?:^|SEP)dsn$)".replace("SEP", _SEP))
 
 _THINKING = re.compile(r"<think>.*?</think>", re.S)
 _JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.S)
@@ -58,8 +59,43 @@ def _json_span(raw: str) -> tuple[str, int]:
     return span, len(raw) - len(span)
 
 
-def intake(raw: str) -> tuple[dict | None, dict]:
-    """(sanitized object or None, the record to keep for this attempt). The record never holds unsanitized text."""
+def _model_of(annotation: Any) -> type[BaseModel] | None:
+    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+        return annotation
+    for arg in get_args(annotation):
+        found = _model_of(arg)
+        if found is not None:
+            return found
+    return None
+
+
+def prune(value: Any, model: type[BaseModel]) -> tuple[Any, int]:
+    """Keep only the keys the step's schema defines, at every depth; return the kept value and how many were dropped.
+
+    A key outside the schema is never used, and its name may abbreviate a credential in a way no pattern can tell
+    apart from an ordinary word (dbPass, bypass), so it is not kept at all."""
+    if not isinstance(value, dict):
+        return value, 0
+    kept, dropped = {}, 0
+    for key, item in value.items():
+        field = model.model_fields.get(key)
+        if field is None:
+            dropped += 1
+            continue
+        inner = _model_of(field.annotation)
+        if inner is not None and isinstance(item, dict):
+            item, n = prune(item, inner)
+            dropped += n
+        elif inner is not None and isinstance(item, list):
+            pruned = [prune(x, inner) for x in item]
+            item, dropped = [x for x, _ in pruned], dropped + sum(n for _, n in pruned)
+        kept[key] = item
+    return kept, dropped
+
+
+def intake(raw: str, model: type[BaseModel] | None = None) -> tuple[dict | None, dict]:
+    """(sanitized object or None, the record to keep for this attempt). The record never holds unsanitized text.
+    With `model`, keys outside that schema are dropped before anything is kept (their number is recorded)."""
     try:
         span, outside = _json_span(raw)
         decoded = json.loads(span)
@@ -81,7 +117,12 @@ def intake(raw: str) -> tuple[dict | None, dict]:
         reason = ("the JSON is nested too deeply to sanitize" if isinstance(exc, RecursionError)
                   else "the JSON contains unpaired surrogate escapes")
         return None, {"status": "unparseable", "characters_received": len(raw), "reason": reason, "omitted": OMITTED}
+    dropped = 0
+    if model is not None:
+        clean, dropped = prune(clean, model)
     record = {"status": "parsed", "characters_received": len(raw), "answer": clean}
+    if dropped:
+        record["keys_not_kept"] = f"{dropped} key(s) outside the answer schema are not kept."
     if outside:
         record["omitted"] = f"{outside} character(s) outside the JSON object (reasoning, prose or fences) are not kept."
     return clean, record

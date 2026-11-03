@@ -97,9 +97,10 @@ copied to `raw/`; it stays, unchanged, in the answers folder.
   [--variant <variant>]]` fails when the decisions name a different result, when the result no longer
   recomputes from `results.json` and `run.json`, when `report.md`, `results.json` or `checks.json` differ
   from what the run wrote, or (with `--case`) when the case folder's evidence has changed. It also fails
-  when `decisions.yaml` holds anything outside its template: another case, extra keys or fields, an item
-  the result does not have, a decision other than accept, reject or investigate, or a checked status
-  that differs from the result's. Without `--case` it says that the
+  when `decisions.yaml` holds anything outside its template: another case, extra keys or fields, a
+  repeated key, an item the result does not have, a decision other than accept, reject or investigate,
+  a role or reason that is not plain text, or a checked status that differs from the result's. When any
+  check fails, it reports that no decision applies and lists recorded decisions as not applicable. Without `--case` it says that the
   evidence was not checked, and it always lists what it does not verify (the `raw/` records, other
   `run.json` fields, the installed tool and methodology versions). Nothing is signed: these checks
   detect changed or inconsistent files, not a deliberate, consistent rewrite of all of them.
@@ -111,7 +112,10 @@ Each attempt is kept as `raw/<step>.attempt-<n>.json`, written before the answer
 - A parseable answer is decoded first, so JSON escapes cannot hide a token, then sanitized
   recursively: string values and keys are masked with the engine's patterns, and the whole value
   under a credential-like key (password, `db_password`, `password_hash`, secret, token, API key,
-  auth, credential, cookie, session ID, connection string, DSN, ...) is replaced. Only this sanitized form is kept, validated, used in a repair prompt
+  auth, credential, cookie, session ID, connection string, DSN, ...) is replaced. Key names are matched in
+  any casing and with `_`, `-`, `.` or space separators. Keys the step's answer schema does not
+  define are then dropped at every depth (their number is recorded), because an abbreviated name such
+  as `dbPass` cannot be told apart from an ordinary word. Only this sanitized form is kept, validated, used in a repair prompt
   or shown. Text outside the JSON object (reasoning, prose, code fences) is not kept; its length is.
 - An answer that cannot be parsed (malformed, truncated, not an object, nested too deeply, or
   containing unpaired surrogate escapes) cannot be sanitized
@@ -209,7 +213,7 @@ See [docs/architecture.md](docs/architecture.md) for every rule and where it com
 pytest
 ```
 
-160 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
+221 tests: adapters, the demo and its variant (pinned outcomes and committed sample output),
 the boundary between answers and checks (engine-set fields ignored, mocked Ollama including
 repair, cut-off and locality cases), exchange bindings (changed evidence, changed earlier
 answers), decision protection, secret handling at every input and output, answer vocabulary,

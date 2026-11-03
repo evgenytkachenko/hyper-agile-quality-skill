@@ -99,7 +99,8 @@ def test_secret_extras_never_reach_attempts_results_report_or_messages(tmp_path)
     written = tree(out)
     assert not leaks(written) and ESCAPED not in written
     record = json.loads((out / "raw" / "1-trace.attempt-1.json").read_text())
-    assert record["answer"]["password"] == "[REDACTED]" and record["answer"]["config"]["db_password"] == "[REDACTED]"
+    assert "password" not in record["answer"] and "config" not in record["answer"]       # outside the schema
+    assert record["keys_not_kept"] == "4 key(s) outside the answer schema are not kept."
     assert record["answer"]["production_problem"] == ANSWERS["1-trace"]["production_problem"]  # diagnostics kept
 
 
@@ -196,3 +197,85 @@ def test_pathological_answers_are_recorded_not_crashing(tmp_path, raw, reason):
         run_investigation(DEMO_CASE, scripted(tmp_path, responses), out_dir=tmp_path / "o")
     kept = json.loads((tmp_path / "o" / "raw" / "1-trace.attempt-1.json").read_text())
     assert kept["status"] == "unparseable" and not leaks(tree(tmp_path / "o"))
+
+
+# ------------------------------------------------------------------ alternate key casing and nested structures
+
+CASINGS = ["PASSWORD", "Password", "DB_PASSWORD", "dbPassword", "db.password", "db-password", "ApiKey", "API-KEY",
+           "apiKey", "api.key", "api key", "OAuth", "OAUTH_TOKEN", "oauthToken", "AuthHeader", "AUTH_HEADER",
+           "auth-header", "authHeader", "auth.header", "X-Auth", "x.auth", "Auth", "SessionId", "session.id",
+           "ConnectionString", "connection.string", "DSN", "db.dsn", "clientSecret", "PrivateKey", "private.key",
+           "http.authorization", "Set-Cookie", "PassPhrase"]
+
+
+@pytest.mark.parametrize("key", CASINGS)
+def test_alternate_casing_and_separators_are_sanitized(key):
+    assert sanitize({key: "plain-value"}) == {key: "[REDACTED]"}
+
+
+@pytest.mark.parametrize("key", ["author", "authority", "passage", "passed", "pass_rate", "bypass", "compass",
+                                 "description", "session_summary", "Authored", "keyword"])
+def test_ordinary_names_are_kept(key):
+    assert sanitize({key: "plain-value"}) == {key: "plain-value"}
+
+
+def test_nested_structures_at_every_depth():
+    value = {"outer": [{"layer": {"items": [{"AuthHeader": "v1"}, ["x", {"db.password": {"deep": "v2"}}]],
+                                  "ok": f"see {TOKEN}"}}],
+             "list_of_lists": [[["Bearer " + TOKEN]]], "SESSION_ID": ["a", "b"], "keep": {"source": "s", "quote": "q"}}
+    clean = sanitize(value)
+    assert clean["outer"][0]["layer"]["items"][0] == {"AuthHeader": "[REDACTED]"}
+    assert clean["outer"][0]["layer"]["items"][1][1] == {"db.password": "[REDACTED]"}
+    assert TOKEN not in json.dumps(clean) and clean["SESSION_ID"] == "[REDACTED]"
+    assert clean["keep"] == {"source": "s", "quote": "q"}
+
+
+
+def test_nested_casing_variants_never_reach_any_output(tmp_path):
+    secret = "plain-words-only-synthetic-value"
+    extras = {"Config": {"AUTH_HEADER": secret, "nested": [{"oauthToken": secret}, {"Db.Password": [secret]}]},
+              "auth.header": secret}
+    responses = {k: json.dumps({**v, **extras}) for k, v in ANSWERS.items()}
+    out = tmp_path / "out"
+    inv = run_investigation(DEMO_CASE, scripted(tmp_path, responses), out_dir=out)
+    write_outputs(inv, out)
+    assert secret not in tree(out)
+    record = json.loads((out / "raw" / "3-hypotheses.attempt-1.json").read_text())
+    assert "Config" not in record["answer"] and "keys_not_kept" in record
+
+
+def test_answer_schema_fields_survive_sanitizing(baseline):
+    """Sanitizing must not destroy legitimate answer content: the demo's checked results equal the unsanitized answers'."""
+    for key, answer in ANSWERS.items():
+        assert sanitize(answer) == answer, key
+
+
+# ------------------------------------------------------------------ keys outside the schema are not kept
+
+
+def test_keys_outside_the_schema_are_dropped_at_every_depth(tmp_path):
+    planted = "Hunter-2xyzzy-synthetic"
+    answer = json.loads(json.dumps(ANSWERS["1-trace"]))
+    answer["dbPass"] = planted
+    answer["links"][0]["userPass"] = planted
+    answer["links"][0]["jwt"] = planted
+    answer["critical_signals"][1]["extra"] = {"connString": planted}
+    responses = dict(ANSWERS, **{"1-trace": json.dumps(answer)})
+    out = tmp_path / "out"
+    inv = run_investigation(DEMO_CASE, scripted(tmp_path, responses), out_dir=out)
+    write_outputs(inv, out)
+    assert planted not in tree(out)
+    record = json.loads((out / "raw" / "1-trace.attempt-1.json").read_text())
+    assert record["keys_not_kept"] == "4 key(s) outside the answer schema are not kept."
+    kept = record["answer"]
+    assert kept["links"][0]["from_item"] == "SHOP-482" and "userPass" not in kept["links"][0]
+    assert kept["production_problem"] == ANSWERS["1-trace"]["production_problem"]
+
+
+def test_pruning_keeps_every_schema_field_of_the_demo_answers():
+    from haq.prompts import STEPS
+    from haq.sanitize import prune
+
+    for step in STEPS:
+        kept, dropped = prune(sanitize(ANSWERS[step.key]), step.output)
+        assert dropped == 0 and kept == ANSWERS[step.key], step.key

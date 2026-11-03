@@ -302,4 +302,82 @@ def test_items_with_problems_are_not_listed_as_decided(tmp_path):
     path.write_text(text.replace("  H1:\n    checked_status: SUPPORTED\n    decision: null",
                                  "  H1:\n    checked_status: SUPPORTED\n    decision: accept"))
     r = haq("check-decisions", str(out))
-    assert r.returncode == 1 and "1 item(s) of this result decided: H1=accept" in r.stdout
+    assert r.returncode == 1 and "0 decisions apply to this result (1 recorded but NOT applicable: H1=accept)" in r.stdout
+
+
+# ------------------------------------------------------------------ third independent review
+
+
+def demo_out(tmp_path):
+    out = tmp_path / "a"
+    assert haq("demo", "--out", str(out)).returncode == 0
+    return out
+
+
+@pytest.mark.parametrize("edit", [
+    lambda t: t.replace("  H1:\n    checked_status: SUPPORTED\n    decision: null",
+                        "  H1:\n    checked_status: SUPPORTED\n    decision: reject\n    decision: accept"),
+    lambda t: t + "hypotheses:\n  H1:\n    checked_status: SUPPORTED\n    decision: accept\n",
+])
+def test_duplicate_keys_fail(tmp_path, edit):
+    out = demo_out(tmp_path)
+    (out / "decisions.yaml").write_text(edit((out / "decisions.yaml").read_text()))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "repeats the key" in r.stdout and "decided:" not in r.stdout
+
+
+@pytest.mark.parametrize("field,value", [
+    ("reason", "{scope: all future results, approve_all: true}"),
+    ("decided_by_role", "[qa, release-manager, everyone]"),
+    ("reason", "'" + "x" * 2001 + "'"),
+])
+def test_role_and_reason_must_be_plain_text(tmp_path, field, value):
+    out = demo_out(tmp_path)
+    text = (out / "decisions.yaml").read_text().replace(
+        "  H1:\n    checked_status: SUPPORTED\n    decision: null\n    decided_by_role: null\n    reason: null",
+        "  H1:\n    checked_status: SUPPORTED\n    decision: accept\n    decided_by_role: null\n    reason: null", 1)
+    (out / "decisions.yaml").write_text(text.replace(f"    {field}: null", f"    {field}: {value}", 1))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and f"{field} must be plain text" in r.stdout
+
+
+def test_a_plain_role_and_reason_still_pass(tmp_path):
+    out = demo_out(tmp_path)
+    text = (out / "decisions.yaml").read_text().replace(
+        "  H1:\n    checked_status: SUPPORTED\n    decision: null\n    decided_by_role: null\n    reason: null",
+        "  H1:\n    checked_status: SUPPORTED\n    decision: accept\n    decided_by_role: QA lead\n"
+        "    reason: Quote and diff agree.", 1)
+    (out / "decisions.yaml").write_text(text)
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 0 and "1 item(s) of this result decided: H1=accept" in r.stdout
+
+
+def test_decisions_are_not_listed_as_applying_when_any_check_fails(tmp_path):
+    out = demo_out(tmp_path)
+    text = (out / "decisions.yaml").read_text().replace("decision: null", "decision: accept", 1)
+    run = json.loads((out / "run.json").read_text())
+    (out / "decisions.yaml").write_text(text.replace(run["result_sha256"], "e" * 64))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "0 decisions apply to this result (1 recorded but NOT applicable: H1=accept)" in r.stdout
+    assert "of this result decided" not in r.stdout
+
+
+@pytest.mark.parametrize("tamper", [
+    lambda c: c.__setitem__("3-hypotheses", "x"),
+    lambda c: c["3-hypotheses"].__setitem__("hypotheses", 5),
+    lambda c: c["3-hypotheses"].__setitem__("proposed_controls", {"C1": 1}),
+])
+def test_tampered_results_fail_cleanly(tmp_path, tamper):
+    out = demo_out(tmp_path)
+    results = json.loads((out / "results.json").read_text())
+    tamper(results["checked"])
+    (out / "results.json").write_text(json.dumps(results))
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "FAIL:" in r.stdout and "unexpected" not in r.stderr
+
+
+def test_results_json_that_is_not_an_object_fails_cleanly(tmp_path):
+    out = demo_out(tmp_path)
+    (out / "results.json").write_text("[]")
+    r = haq("check-decisions", str(out))
+    assert r.returncode == 1 and "does not hold a JSON object" in r.stdout
