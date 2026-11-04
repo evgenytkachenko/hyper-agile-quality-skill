@@ -1,15 +1,17 @@
 # Before publishing
 
-This candidate has been pushed as the branch `candidate/v0.1` but not released. These decisions belong to the
-copyright holder.
+This candidate has been pushed as the branch `candidate/v0.1` of a public repository but not
+released. These decisions belong to the copyright holder.
 
-- [ ] **License.** None is chosen. Without one, the code is not open source. Choose a license
-      for the code and decide whether the methodology files and documentation use the same one.
+- [x] **License.** MIT (`LICENSE`), chosen by the copyright holder. It covers the project's own
+      code, documentation, agent skill, fictional example and sample output, and the methodology
+      files, including the files copied from hyper-agile-engine (`VENDORED.md`). Dependencies are
+      not included and keep their own licenses. The book is not included or licensed.
 - [ ] **Vendored engine files** (`src/haq/_engine/`, `src/haq/_methodology/`). Confirm you own
-      them outright and may publish them, including any work done for or with an employer or
-      client, and that publishing them separately from the engine is intended.
+      them outright and may publish and license them, including any work done for or with an
+      employer or client, and that publishing them separately from the engine is intended.
 - [ ] **Methodology and the book.** Confirm that the methodology files may be published under
-      the chosen license and that the wording in `docs/book.md` and the README describes their
+      the MIT License and that the wording in `docs/book.md` and the README describes their
       relationship to the book correctly.
 - [ ] **Project and package names.** `hyper-agile-quality-skill` and the `haq` command; check for
       conflicts on the package index and with any trademark you hold or know of.
@@ -17,10 +19,12 @@ copyright holder.
       appear in public commits.
 - [ ] **Engine references.** The README names hyper-agile-engine. Decide whether to link it, and
       whether it will be public.
-- [ ] **Dependencies.** Runtime: pydantic (MIT), pydantic-core (MIT), httpx (BSD-3-Clause),
-      httpcore (BSD-3-Clause), PyYAML (MIT), anyio (MIT), h11 (MIT), idna (BSD-3-Clause),
-      certifi (MPL-2.0), typing-extensions (PSF). None is redistributed by this repository;
-      confirm compatibility with the license you choose.
+- [x] **Dependencies.** Runtime: pydantic, pydantic-core, annotated-types, typing-inspection,
+      PyYAML, anyio, h11 (MIT); httpx, httpcore, idna (BSD-3-Clause); certifi (MPL-2.0);
+      typing-extensions (PSF-2.0). Tests only: pytest, pluggy, iniconfig (MIT), packaging
+      (Apache-2.0 OR BSD-2-Clause), Pygments (BSD-2-Clause). Build only: hatchling. None is
+      included in this repository or its packages, so no third-party notices are required here;
+      all are compatible with MIT.
 - [ ] **Fictional example.** Confirm "Example Shop", the `SHOP-` keys and the scenario do not
       resemble any real employer, customer or incident you know of.
 - [ ] Run `python scripts/publication_check.py` and the tests on the exact commit to publish.

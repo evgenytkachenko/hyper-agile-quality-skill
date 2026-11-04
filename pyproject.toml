@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Evidence-checked investigation of escaped defects using the Hyper-Agile Quality Loop"
 readme = "README.md"
 requires-python = ">=3.12"
-# License: not yet chosen by the copyright holder. See docs/RELEASE-CHECKLIST.md.
+# The project's own code, documentation and methodology files (including the files in
+# src/haq/_engine/ and src/haq/_methodology/, see VENDORED.md) are MIT-licensed.
+# Dependencies keep their own licenses.
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Evgeny Tkachenko" }]
 dependencies = [
     "pydantic>=2.7",
     "httpx>=0.27",
@@ -25,7 +30,7 @@ build-backend = "hatchling.build"
 packages = ["src/haq"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/haq", "tests", "skill", "docs", "README.md", "VENDORED.md", "pyproject.toml"]
+include = ["src/haq", "tests", "skill", "docs", "README.md", "VENDORED.md", "LICENSE", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

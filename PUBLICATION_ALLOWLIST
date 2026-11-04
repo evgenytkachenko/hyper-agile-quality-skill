@@ -1,6 +1,7 @@
 # Explicit list of files allowed in the public repository. One path per line.
 # scripts/publication_check.py fails if Git tracks anything not listed here.
 .gitignore
+LICENSE
 PUBLICATION_ALLOWLIST
 README.md
 VENDORED.md

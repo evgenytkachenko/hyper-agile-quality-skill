@@ -10,8 +10,8 @@ It applies the Hyper-Agile Quality Loop methodology (see [Relationship to the bo
 Its deterministic evidence checks are reused from the author's hyper-agile-engine
 (see [VENDORED.md](VENDORED.md)).
 
-> **Status: candidate, not released.** No license has been chosen yet. See
-> [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md).
+> **Status: candidate, not released.** Licensed under the [MIT License](LICENSE); see
+> [License](#license). Remaining release steps: [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md).
 
 ## What it does — and what it does not
 
@@ -264,3 +264,20 @@ specific chapters. It is not a substitute for the book. See [docs/book.md](docs/
 ## Related project
 
 hyper-agile-engine — the larger assessment engine this project reuses checks from.
+
+## License
+
+MIT License, copyright (c) 2026 Evgeny Tkachenko. See [LICENSE](LICENSE).
+
+The MIT License covers everything in this repository: the code, the documentation, the agent
+skill (`skill/`), the fictional example case and sample output, and the methodology files in
+`src/haq/_methodology/`. It also covers the files in `src/haq/_engine/` and
+`src/haq/_methodology/` that were copied from the author's hyper-agile-engine
+([VENDORED.md](VENDORED.md)); applying MIT here does not change the terms of the engine
+repository itself.
+
+The license covers the methodology files as written. It does not cover the book
+*Hyper-Agile Testing*, which is not included (see [docs/book.md](docs/book.md)).
+
+Dependencies (pydantic, httpx, PyYAML and the packages they require) are not included in this
+repository or in its packages. They are installed separately and keep their own licenses.

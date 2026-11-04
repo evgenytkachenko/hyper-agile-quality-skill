@@ -39,6 +39,10 @@ engine's own `providers/__init__.py` (which also registers a cloud provider) is 
 
 ## Licensing
 
-The engine repository has no license file. These files are the author's own work as far as
-this project knows, but their redistribution terms must be decided by the copyright holder
-before publication. See `docs/RELEASE-CHECKLIST.md`.
+The copyright holder licenses the files listed above, as included in this repository, under
+the MIT License (see `LICENSE`), like the rest of this project. They are the author's own
+work, copied from the author's own repository; no third-party code is vendored.
+
+This applies to the copies in this repository only. The hyper-agile-engine repository has
+no license file, and this project does not change its terms. Third-party dependencies are not
+vendored and keep their own licenses.
