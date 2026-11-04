@@ -1,5 +1,5 @@
 {
- "result_sha256": "a22f868a391572f66dcdba761354065470f2122dcb00cf9f2be37e8e2bb9fc93",
+ "result_sha256": "5efd514fd04e6bb3d64eed0401951f9084a10935fb6fc76e1d3669734abf503a",
  "checked": {
   "1-trace": {
    "production_problem": "After applying a percentage promo code on the cart page, changing an item quantity reduced the order total a second time (19% off instead of 10% for SPRING10). 37 orders were affected between 2026-03-10 and 2026-03-14. It was detected by the finance team's daily discount reconciliation, not by customers [issue:SHOP-482] [production-learning.md].",

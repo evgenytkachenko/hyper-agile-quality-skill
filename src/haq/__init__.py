@@ -5,7 +5,7 @@ see VENDORED.md). This package adds local-file adapters, a three-step investigat
 flow, a hypothesis checker, scripted/Ollama/agent answer providers and a report.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.0b0"
 
 # The hyper-agile-engine commit the vendored modules and methodology were taken from.
 ENGINE_SOURCE_COMMIT = "88b9b9f"

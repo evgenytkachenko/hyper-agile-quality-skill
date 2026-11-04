@@ -3,7 +3,7 @@
 # These decisions apply only to the result named by result_sha256. If the evidence or the answers change,
 # the result changes and `haq check-decisions` reports these decisions as not applying to it.
 case: checkout-promo
-result_sha256: 9d5599eac7b7ffbf3f4db119440375c0a50bacd998eb91404836c78b7daefad4
+result_sha256: 32bde7cfb837abceb903921832fcedaecf7dc0cf180aad3ba629c650200ed6a7
 hypotheses:
   H1:
     checked_status: SUPPORTED

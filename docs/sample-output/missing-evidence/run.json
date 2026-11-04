@@ -1,7 +1,7 @@
 {
- "tool": "hyper-agile-quality-skill 0.1.0",
+ "tool": "hyper-agile-quality-skill 0.1.0b0",
  "engine_source_commit": "88b9b9f",
- "finished_at": "2026-11-03T18:06:40+00:00",
+ "finished_at": "2026-11-04T01:57:18+00:00",
  "case_id": "checkout-promo+missing-evidence",
  "variant": "missing-evidence",
  "answers": {
@@ -45,10 +45,10 @@
   "production-learning.md": "0aa161306be867f8d8fe70a84a0e0caab8943a6eac77ad67adf6273032a2f4ef",
   "releases/4.2.0.yaml": "36313cbdfb638fa87ea5da2037f5a26a0c8b498e8e5f7b3df7af0afdb48ee3d8"
  },
- "result_sha256": "a22f868a391572f66dcdba761354065470f2122dcb00cf9f2be37e8e2bb9fc93",
+ "result_sha256": "5efd514fd04e6bb3d64eed0401951f9084a10935fb6fc76e1d3669734abf503a",
  "report_sha256": "4bd2afd82667cfaa1643f163d40f5464fc6d425e94eea5974043302ddd917af6",
  "result_basis": {
-  "tool": "0.1.0",
+  "tool": "0.1.0b0",
   "engine_source_commit": "88b9b9f",
   "case_id": "checkout-promo+missing-evidence",
   "variant": "missing-evidence",
@@ -83,9 +83,9 @@
  },
  "artifacts_sha256": {
   "report.md": "4bd2afd82667cfaa1643f163d40f5464fc6d425e94eea5974043302ddd917af6",
-  "results.json": "c03132b52bec7304c716b2840b2699668a157e75dc6a0af94ca8099735d3e2a8",
+  "results.json": "2ce5cc765c0a323e7ff73ce3f23c84459bc3f1660a715d2324d91a2fbab4dc21",
   "checks.json": "97c28bdc6845ca20cb81486cb3f4a7a164dfc5e11a044827c6a8fef29ead8bc7"
  },
- "decisions_template_sha256": "c78e7a3a9bb0f1aa811890b14db760d4ecd2c97e16468afd605265c0bd3c6eef",
+ "decisions_template_sha256": "e0daa7a5757ea47f53921c54fd387a7f8428afa619f85c3a11b785598ae4a6ef",
  "warnings": []
 }

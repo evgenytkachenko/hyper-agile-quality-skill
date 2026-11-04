@@ -10,6 +10,7 @@ docs/architecture.md
 docs/book.md
 docs/connectors.md
 docs/local-model.md
+docs/release-notes/v0.1.0-beta.md
 docs/sample-output/baseline/checks.json
 docs/sample-output/baseline/decisions.yaml
 docs/sample-output/baseline/haq-output.json

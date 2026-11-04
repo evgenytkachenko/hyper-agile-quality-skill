@@ -10,8 +10,19 @@ It applies the Hyper-Agile Quality Loop methodology (see [Relationship to the bo
 Its deterministic evidence checks are reused from the author's hyper-agile-engine
 (see [VENDORED.md](VENDORED.md)).
 
-> **Status: candidate, not released.** Licensed under the [MIT License](LICENSE); see
-> [License](#license). Remaining release steps: [docs/RELEASE-CHECKLIST.md](docs/RELEASE-CHECKLIST.md).
+> **Status: beta (v0.1.0-beta), a first public pre-release.** Commands, file formats and
+> output may change before a stable release. Licensed under the [MIT License](LICENSE); see
+> [License](#license). Release notes: [docs/release-notes/v0.1.0-beta.md](docs/release-notes/v0.1.0-beta.md).
+
+## What is supported in this version
+
+| Capability | Status |
+| --- | --- |
+| Evidence from **local files** in a case folder (Markdown/text, issue YAML, JUnit XML, release YAML) | Supported |
+| **Scripted replay** of the fictional demo case (`haq demo`), no model | Supported |
+| **Agent answer exchange** (`--answers-dir`): the agent you work with answers each step, and `haq` checks every answer | Supported |
+| Local model through **Ollama** (`--model`) | **Experimental.** Tested with a mocked HTTP transport and only partially exercised with a local model; no live-model investigation has been completed and no accuracy claim is made ([details](#local-model-configuration-experimental)) |
+| Live connectors (Jira, GitHub, test management, documentation tools) | **Not included.** Export evidence to local files first |
 
 ## What it does — and what it does not
 
@@ -22,8 +33,8 @@ Its deterministic evidence checks are reused from the author's hyper-agile-engin
   ("no test existed") cannot be strong when that evidence was never collected; evidence
   produced after release cannot confirm a pre-release cause.
 - It **proposes**: hypotheses, confidence levels, regression tests and controls come from an
-  answer source — a local model through Ollama, the agent you are working with, or
-  scripted answers for the demo. They are labelled as such everywhere.
+  answer source — the agent you are working with (answer exchange), scripted answers for the
+  demo, or, experimentally, a local model through Ollama. They are labelled as such everywhere.
 - It **does not decide**: it never names a root cause, never claims model accuracy, never
   creates tickets, tests or monitors, and never sends evidence anywhere except the model
   endpoint you choose (loopback only, unless you explicitly allow another).
@@ -37,15 +48,24 @@ cannot confirm that the evidence *means* what the answer says. Every report says
 > Review your evidence before giving it to any answer source, and review every output before you
 > share, commit or publish it. Masking reduces risk; it does not make content safe to share.
 
-## Quick start (no model needed)
+## Install
 
-Requirements: Python 3.12+ and pip (or [uv](https://docs.astral.sh/uv/): `uv venv` and `uv pip install` work the same way).
+Requirements: Python 3.12+ and pip (or [uv](https://docs.astral.sh/uv/): `uv venv` and
+`uv pip install` work the same way). Installing downloads the dependencies (pydantic, httpx,
+PyYAML) from the Python package index.
 
 ```sh
-git clone <this repository> && cd hyper-agile-quality-skill
+git clone https://github.com/evgenytkachenko/hyper-agile-quality-skill.git
+cd hyper-agile-quality-skill
 python3.12 -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev]"
-haq demo                                   # fictional case, scripted answers
+pip install .                 # or: pip install -e ".[dev]" to run the tests
+haq --version
+```
+
+## Quick start: replay the fictional demo (no model needed)
+
+```sh
+haq demo                                   # fictional case, scripted answers -> ./haq-demo
 haq demo --variant missing-evidence        # same answers, less/changed evidence
 haq compare haq-demo haq-demo-missing-evidence
 ```
@@ -136,24 +156,53 @@ Each attempt is kept as `raw/<step>.attempt-<n>.json`, written before the answer
   it with a model you control.
 - Validation errors are reported by field and message, never with the offending value.
 
-## Investigate your own case
+## Investigate your own case (agent answer exchange)
 
-```sh
-haq init my-case          # creates a case folder template
-# put your evidence in it (see "Supported evidence" below), then:
-haq check-case my-case    # loads and lists evidence; no model
-haq investigate my-case --out my-case-result --model <a model from `ollama list`>
-```
+1. Create a case folder and put your local evidence in it (see
+   [Supported evidence](#supported-evidence-connectors)):
 
-Use only evidence you are allowed to process with the chosen answer source. Keep real case
-folders out of version control (the default `.gitignore` excludes `cases/`).
+   ```sh
+   haq init my-case          # creates a template with placeholders; replace them
+   haq check-case my-case    # loads and lists the evidence and what is missing; no model
+   ```
+
+2. Run the investigation with an answers folder. `haq` writes the first step's prompt and stops
+   (exit code 3):
+
+   ```sh
+   haq investigate my-case --out my-result --answers-dir my-result-exchange
+   ```
+
+3. The answerer (normally the coding agent using the skill below) reads
+   `my-result-exchange/1-trace.prompt.md`, whose first line holds the step's **binding**, and
+   saves `my-result-exchange/1-trace.answer.json` as
+   `{"binding": "<binding>", "answer": <one JSON object matching the schema in the prompt>}`.
+4. Run the same command again. Repeat for steps `2-validation` and `3-hypotheses`; after the
+   third answer, `haq` checks everything and writes the report to `my-result/`.
+
+The binding ties each answer to the exact prompt, evidence, methodology and earlier answers, so
+an answer written for different evidence is refused, not reused. Use only evidence you are
+allowed to process with the chosen answer source: with answer exchange, the evidence is read by
+whatever model runs the agent. Keep real case folders out of version control (the default
+`.gitignore` excludes `cases/`).
+
+Experimental alternative: `haq investigate my-case --out my-result --model <model>` asks a
+local Ollama model instead (see [Local model configuration](#local-model-configuration-experimental)).
 
 ## Use it as an agent skill
 
 `skill/hyper-agile-quality/SKILL.md` is a skill file for coding agents that support the
-`SKILL.md` format (for example Claude Code: copy the folder to `~/.claude/skills/` or to a
-project's `.claude/skills/`, and make sure `haq` is on the agent's PATH). Invoke it with a
-request such as "investigate why SHOP-482 escaped" or `/hyper-agile-quality my-case`.
+`SKILL.md` format. The skill is in the repository, not in the installed Python package, so
+install it from your clone. For example, for Claude Code:
+
+```sh
+mkdir -p ~/.claude/skills
+cp -R skill/hyper-agile-quality ~/.claude/skills/      # or a project's .claude/skills/
+```
+
+Make sure `haq` is on the agent's PATH (activate the virtual environment, or give the agent
+the full path to `.venv/bin/haq`). Invoke it with a request such as "investigate why
+SHOP-482 escaped" or `/hyper-agile-quality my-case`.
 
 The skill tells the agent how to build the case folder, which answer source to use, how to
 explain the report, and that it must stay read-only and leave decisions to people. Those
@@ -176,7 +225,8 @@ written for different evidence or after an earlier answer changed is refused, no
 | Jira, GitHub, Testiny, Notion, MCP, REST | **Not included.** They exist in hyper-agile-engine but pull in its collector and transports; not vendored, not tested here | — |
 | Export through an agent's own tools | Instructions only (SKILL.md) | Not tested |
 
-No live service was contacted in developing or testing this project. Credential-like strings
+`haq` has no connector to any live system and contacts none; only the answer source you choose
+receives evidence (an agent through answer exchange, or a local Ollama endpoint). Credential-like strings
 in free text (titles, descriptions, comments, notes, test messages and all answers) are masked
 with the engine's rules before they reach a model, an output file or a message. Identifiers
 (file paths, case and variant IDs, issue keys, link fields, release versions) that look like
@@ -187,7 +237,7 @@ unique, case aside. An unexpected internal error prints only its type, never its
 traceback, because either may quote evidence (`HAQ_DEBUG=1` shows the traceback). See
 [docs/connectors.md](docs/connectors.md).
 
-## Local model configuration
+## Local model configuration (experimental)
 
 | Setting | Flag | Environment | Default |
 | --- | --- | --- | --- |
@@ -227,6 +277,7 @@ See [docs/architecture.md](docs/architecture.md) for every rule and where it com
 ## Tests
 
 ```sh
+pip install -e ".[dev]"
 pytest
 ```
 
@@ -240,7 +291,7 @@ integrity checks, CLI behavior and
 vendored-file hashes.
 The test suite verifies behavior with fictional fixtures, scripted answers and mocked model
 traffic only. For the two partial local-model trials, see the model testing status under
-[Local model configuration](#local-model-configuration).
+[Local model configuration](#local-model-configuration-experimental).
 
 ## Limitations
 
@@ -271,6 +322,12 @@ specific chapters. It is not a substitute for the book. See [docs/book.md](docs/
 ## Related project
 
 hyper-agile-engine — the larger assessment engine this project reuses checks from.
+
+## Feedback
+
+Report problems and suggestions as [GitHub issues](https://github.com/evgenytkachenko/hyper-agile-quality-skill/issues). Describe the problem with
+the fictional demo case or with made-up evidence: **do not post real evidence, reports, `raw/`
+records or anything confidential**, because issues are public.
 
 ## License
 

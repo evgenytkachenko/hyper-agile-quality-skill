@@ -65,10 +65,7 @@ Missing evidence is a limitation to report, not a reason to stop.
 
 ## Step 2 — Choose the answer source (ask the user)
 
-1. **Local model (preferred):** `haq investigate <folder> --out <dir> --model <name>`
-   uses Ollama on this machine (`HAQ_OLLAMA_URL`, default `http://localhost:11434`).
-   The tool never downloads a model. Check with `haq doctor --ollama`.
-2. **You as the model:** `haq investigate <folder> --out <dir> --answers-dir <dir>/exchange`
+1. **You as the model (supported):** `haq investigate <folder> --out <dir> --answers-dir <dir>-exchange`
    writes each step's prompt to the exchange folder and stops. Read the prompt; its first
    line holds the step's binding. Save `<step>.answer.json` as
    `{"binding": "<that binding>", "answer": <one JSON object matching the schema>}` and run the
@@ -77,6 +74,10 @@ Missing evidence is a limitation to report, not a reason to stop.
    binding onto an old answer.
    The evidence is then processed by whatever model runs you; get the user's agreement
    first. Your answers go through exactly the same checks.
+2. **Local model (experimental):** `haq investigate <folder> --out <dir> --model <name>`
+   uses Ollama on this machine (`HAQ_OLLAMA_URL`, default `http://localhost:11434`). Tell the
+   user it is experimental: no live-model investigation has been completed with it and no
+   accuracy claim is made. The tool never downloads a model. Check with `haq doctor --ollama`.
 3. **Demo only:** `haq demo` and `haq demo --variant missing-evidence` run a fictional case
    with scripted answers. Never present demo output as an investigation of a real case.
 

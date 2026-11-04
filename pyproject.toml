@@ -1,6 +1,6 @@
 [project]
 name = "hyper-agile-quality-skill"
-version = "0.1.0"
+version = "0.1.0b0"
 description = "Evidence-checked investigation of escaped defects using the Hyper-Agile Quality Loop"
 readme = "README.md"
 requires-python = ">=3.12"

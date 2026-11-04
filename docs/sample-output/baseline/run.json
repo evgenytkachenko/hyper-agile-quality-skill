@@ -1,7 +1,7 @@
 {
- "tool": "hyper-agile-quality-skill 0.1.0",
+ "tool": "hyper-agile-quality-skill 0.1.0b0",
  "engine_source_commit": "88b9b9f",
- "finished_at": "2026-11-03T18:06:40+00:00",
+ "finished_at": "2026-11-04T01:57:18+00:00",
  "case_id": "checkout-promo",
  "variant": "",
  "answers": {
@@ -47,10 +47,10 @@
   "test-results/ci-unit.xml": "10a0cfef5ab97679514173f1c10bc39aee4d01567e549dae73ef5c40ccf28047",
   "tests.md": "9d41e68a3681fa311357abfd5f859b6e76f935501b328b0568159b472a4b491f"
  },
- "result_sha256": "9d5599eac7b7ffbf3f4db119440375c0a50bacd998eb91404836c78b7daefad4",
+ "result_sha256": "32bde7cfb837abceb903921832fcedaecf7dc0cf180aad3ba629c650200ed6a7",
  "report_sha256": "796cf45d570c60494f9ab0e75de552797c9097f7d3d13c2bdac7664a4a7e21be",
  "result_basis": {
-  "tool": "0.1.0",
+  "tool": "0.1.0b0",
   "engine_source_commit": "88b9b9f",
   "case_id": "checkout-promo",
   "variant": "",
@@ -87,9 +87,9 @@
  },
  "artifacts_sha256": {
   "report.md": "796cf45d570c60494f9ab0e75de552797c9097f7d3d13c2bdac7664a4a7e21be",
-  "results.json": "1019c2f6f6e73b09b8b45d5ed3b76207254dd97f34792fbe3883e588c9f5173c",
+  "results.json": "b0c6bd0fd1312d8fc944678a14c358f37aff6ae530fa667f0258885012f932cc",
   "checks.json": "88081ab4eaeffaf30577441413230481704d83aa115b282770787c1cb558c821"
  },
- "decisions_template_sha256": "97bdbeb8a1a657526cfadefdca1a98799bf6dab53d1ef452e6bdcfe318066bbb",
+ "decisions_template_sha256": "a879bb25d5ba105de548208b77754f57fc9946a551bb238b93cba4eb77843ee0",
  "warnings": []
 }

@@ -1,7 +1,8 @@
 # Before publishing
 
-This candidate has been pushed as the branch `candidate/v0.1` of a public repository but not
-released. These decisions belong to the copyright holder.
+The repository is public. Version 0.1.0-beta (package `0.1.0b0`) is prepared but not tagged or
+released; tagging and a GitHub release need the copyright holder's approval of the exact commit
+and of `docs/release-notes/v0.1.0-beta.md`. These decisions belong to the copyright holder.
 
 - [x] **License.** MIT (`LICENSE`), chosen by the copyright holder. It covers the project's own
       code, documentation, agent skill, fictional example and sample output, and the methodology
@@ -28,3 +29,5 @@ released. These decisions belong to the copyright holder.
 - [ ] **Fictional example.** Confirm "Example Shop", the `SHOP-` keys and the scenario do not
       resemble any real employer, customer or incident you know of.
 - [ ] Run `python scripts/publication_check.py` and the tests on the exact commit to publish.
+- [ ] Approve the release notes and the exact commit; then tag `v0.1.0-beta` and publish the
+      GitHub release (marked as a pre-release).

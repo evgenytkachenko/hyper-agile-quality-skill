@@ -1,4 +1,9 @@
-# Local model (Ollama)
+# Local model (Ollama): experimental
+
+The Ollama answer source is **experimental** in v0.1.0-beta: it is tested with a mocked HTTP
+transport and only partially exercised with a local model, and no live-model investigation has
+been completed (see [Testing status](#testing-status)). The supported answer sources are
+scripted replay (`haq demo`) and agent answer exchange (`--answers-dir`).
 
 ## Setup
 
