@@ -56,6 +56,18 @@ def _say(text: str) -> None:
     print(mask_text(text))
 
 
+# Shown on stderr by the commands that handle a user's own evidence, so that stdout (the results a
+# script may parse) and exit codes are unchanged. Not shown by the fictional demo.
+CONFIDENTIALITY_NOTICE = (
+    "Notice: haq masks only credential-like values it recognizes. Other secrets and confidential or personal "
+    "information pass through unchanged to the answer source and the outputs. Use only evidence you are allowed "
+    "to share with the chosen answer source, and review every output before sharing it.")
+
+
+def _notice() -> None:
+    print(CONFIDENTIALITY_NOTICE, file=sys.stderr)
+
+
 def _run(case: Path, provider, out: Path, variant: Path | None, overwrite: bool, context_tokens: int | None,
          archive_decisions: bool = False) -> int:
     from .investigate import prepare_out_dir, run_investigation, write_outputs
@@ -96,6 +108,7 @@ def cmd_demo(args) -> int:
 
 
 def cmd_investigate(args) -> int:
+    _notice()
     provider = _provider(args)
     if provider.name == "ollama":
         provider.check_ready()
@@ -107,6 +120,7 @@ def cmd_investigate(args) -> int:
 def cmd_check_case(args) -> int:
     from .adapters import load_evidence
 
+    _notice()
     case = load_evidence(Path(args.case), Path(args.variant) if args.variant else None)
     _say(f"Case {case.bundle.case_id}: {len(case.bundle.artifacts())} evidence artifact(s); no model was called.")
     for a in case.bundle.artifacts():
@@ -155,6 +169,7 @@ def cmd_init(args) -> int:
         path.write_text(text, encoding="utf-8")
     print(f"Created a case template in {root}. Replace the placeholders with your evidence, then run:")
     print(f"  haq check-case {root}")
+    _notice()
     return 0
 
 

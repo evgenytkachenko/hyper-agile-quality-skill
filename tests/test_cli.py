@@ -51,3 +51,20 @@ def test_init_then_check_case(tmp_path):
 def test_doctor_without_model(tmp_path):
     r = haq("doctor")
     assert r.returncode == 0 and "Ollama: not checked" in r.stdout and "Methodology: ok" in r.stdout
+
+
+def test_confidentiality_notice_goes_to_stderr_only_for_own_evidence(tmp_path):
+    """The notice is shown where a user's own evidence is handled, on stderr, so stdout and exit codes are as before."""
+    from haq.cli import CONFIDENTIALITY_NOTICE
+
+    case = tmp_path / "case"
+    r = haq("init", str(case))
+    assert r.returncode == 0 and CONFIDENTIALITY_NOTICE in r.stderr and "Notice" not in r.stdout
+    r = haq("check-case", str(case))
+    assert r.returncode == 0 and CONFIDENTIALITY_NOTICE in r.stderr and "Notice" not in r.stdout
+    assert r.stdout.startswith("Case my-case: ")
+    r = haq("investigate", str(case), "--out", str(tmp_path / "o"), "--answers-dir", str(tmp_path / "x"))
+    assert r.returncode == 3 and CONFIDENTIALITY_NOTICE in r.stderr and "Notice" not in r.stdout
+    assert r.stdout.startswith("Waiting for an answer to step '1-trace'")
+    r = haq("demo", "--out", str(tmp_path / "d"))
+    assert r.returncode == 0 and "Notice" not in r.stderr + r.stdout

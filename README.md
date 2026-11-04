@@ -47,6 +47,8 @@ cannot confirm that the evidence *means* what the answer says. Every report says
 > personal data — passes through unchanged into prompts, reports, JSON files and `raw/` records.
 > Review your evidence before giving it to any answer source, and review every output before you
 > share, commit or publish it. Masking reduces risk; it does not make content safe to share.
+> `haq init`, `haq check-case` and `haq investigate` print a short reminder of this on stderr
+> (stdout and exit codes are unaffected); the agent skill raises it before anything else.
 
 ## Install
 
@@ -155,6 +157,11 @@ Each attempt is kept as `raw/<step>.attempt-<n>.json`, written before the answer
   parser's reason, which names a position, never content. To diagnose such an answer, reproduce
   it with a model you control.
 - Validation errors are reported by field and message, never with the offending value.
+- With answer exchange, every invocation re-reads the saved answers of the steps already
+  answered and records them again, so a finished three-step exchange typically shows
+  `1-trace.attempt-1..3`, `2-validation.attempt-1..2` and `3-hypotheses.attempt-1`. These are
+  repeated records of the same answers, not failed attempts; each record's `status` says whether
+  it was accepted (`parsed`) or not.
 
 ## Investigate your own case (agent answer exchange)
 
@@ -200,9 +207,31 @@ mkdir -p ~/.claude/skills
 cp -R skill/hyper-agile-quality ~/.claude/skills/      # or a project's .claude/skills/
 ```
 
+If you run Claude Code with `CLAUDE_CONFIG_DIR` set, its user skills live in that folder
+instead of `~/.claude`: copy the skill to `"$CLAUDE_CONFIG_DIR/skills/"`.
+
 Make sure `haq` is on the agent's PATH (activate the virtual environment, or give the agent
 the full path to `.venv/bin/haq`). Invoke it with a request such as "investigate why
 SHOP-482 escaped" or `/hyper-agile-quality my-case`.
+
+What to expect when you invoke it:
+
+- The agent first explains that masking cannot catch every secret and that you must review
+  inputs and outputs, then asks **which answer source to use** (itself through answer exchange,
+  or the experimental local model) and **for your agreement** that the chosen source may read the
+  evidence. You can answer both up front, for example "use answer exchange with you as the
+  model; I agree you may read this evidence".
+- The agent answers from the prompts `haq` writes and the case evidence. It must not use the demo's
+  scripted answers that ship with the package; it may read the package source to troubleshoot,
+  and should say so.
+- Claude Code asks before running shell commands. Approving each `haq` command when asked is the
+  safest choice. If you add allow rules to reduce prompts, keep them narrow and temporary (a
+  project or session setting rather than your user settings), for example
+  `Bash(haq check-case:*)`, `Bash(haq investigate:*)` and `Bash(haq check-decisions:*)`.
+  Understand what they permit: `haq investigate` writes output folders, can replace a finished
+  run with `--overwrite`, and with `--model --base-url ... --allow-remote` would send the evidence
+  to a non-local endpoint. A broad rule such as `Bash(haq:*)` covers all of that, and rules for
+  general shell commands cover far more; avoid them.
 
 The skill tells the agent how to build the case folder, which answer source to use, how to
 explain the report, and that it must stay read-only and leave decisions to people. Those

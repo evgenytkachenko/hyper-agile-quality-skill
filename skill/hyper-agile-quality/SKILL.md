@@ -35,6 +35,21 @@ treat it as a write and do not call it. After presenting results you may ask:
 "Would you like me to prepare any of these follow-up actions?" — and act only on explicit
 approval of a specific action.
 
+## Step 0 — Before anything else: confidentiality
+
+Before you read, build or run anything, tell the user, in your own words:
+
+- Masking cannot catch every secret. `haq` masks only credential-like values it recognizes. Other secrets (for example a word-only
+  password), customer names, internal host names and personal data pass through unchanged into
+  prompts, reports, JSON files and `raw/` records.
+- With answer exchange, the evidence is read by the model that runs you; with a local model, by
+  that model. Use only evidence the user is allowed to share with that answer source.
+- They must review the evidence before it is processed and every output before it is shared.
+
+Then ask which answer source to use (Step 2) and get the user's agreement for it. If the user has
+already given both in their request, confirm them briefly and continue. `haq investigate`,
+`haq check-case` and `haq init` also print a short notice to stderr; that does not replace this step.
+
 ## Step 1 — Build the case folder
 
 Run `haq init <folder>` for a template, or create the folder yourself:
@@ -52,11 +67,7 @@ releases/<version>.yaml   release record: work items, validation runs, approval 
 production-learning.md    detection, impact, timeline after release
 ```
 
-Tell the user that masking cannot catch every secret: credential-like values are masked, but
-anything in an unrecognized format, and confidential or personal information, passes through
-unchanged. They must review the evidence before it is processed and every output before it is
-shared. Use only evidence the user is allowed to share with the chosen answer source. Copy text
-exactly; do not summarize evidence into the folder, because quotes are checked against it.
+Remind the user of Step 0 if the evidence comes from a connected tool. Copy text exactly; do not summarize evidence into the folder, because quotes are checked against it.
 If you export from a connected tool, use read operations only and say which tool and query
 produced each file. Record people by role, not by name.
 
@@ -74,6 +85,11 @@ Missing evidence is a limitation to report, not a reason to stop.
    binding onto an old answer.
    The evidence is then processed by whatever model runs you; get the user's agreement
    first. Your answers go through exactly the same checks.
+   **Ground every answer in the prompt and the case evidence only.** The package also contains
+   scripted answers for the fictional demo (`examples/*.responses.json`); never read, copy or
+   adapt them for an investigation, including of the demo case. Reading the package source is
+   fine when you need to troubleshoot an error or understand a check, but tell the user, and if
+   you happen to see demo answers, say so and do not use them.
 2. **Local model (experimental):** `haq investigate <folder> --out <dir> --model <name>`
    uses Ollama on this machine (`HAQ_OLLAMA_URL`, default `http://localhost:11434`). Tell the
    user it is experimental: no live-model investigation has been completed with it and no
