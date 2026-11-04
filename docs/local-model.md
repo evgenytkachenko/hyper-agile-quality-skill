@@ -38,7 +38,18 @@ and 9,900 tokens for the three steps (before the answer); real cases are larger.
 
 ## Testing status
 
-Tested only with a mocked HTTP transport (`tests/test_boundary.py`): request shape, schema,
-context size, repair, cut-off and locality refusal. **Not run against a live model.** No
-statement about any model's accuracy or usefulness on this task is supported by this
-project's tests. Speed and memory use of this three-step flow have not been measured.
+Tested with a mocked HTTP transport (`tests/test_boundary.py`): request shape, schema,
+context size, repair, cut-off and locality refusal.
+
+Partially exercised with a local model: two trials on the fictional demo case, with one locally
+installed 8-billion-parameter model, run through a separate bounded test harness that is not
+part of this repository. Both were stopped by safety checks:
+
+- The first was stopped by the harness's own model-identity check before any answer was
+  received. The check compared the wrong identifier (an error in the harness, since corrected).
+- The second was stopped by a memory-pressure limit after two of the three steps had been
+  answered and accepted.
+
+**Neither trial completed the investigation, and no live-model validation has been
+completed.** No statement about any model's accuracy, usefulness, speed or memory use on this
+task is supported by this project's tests or by these trials.

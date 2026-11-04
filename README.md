@@ -202,9 +202,14 @@ traceback, because either may quote evidence (`HAQ_DEBUG=1` shows the traceback)
 `haq` never installs Ollama or downloads models. `haq doctor --ollama` lists installed
 models (it does not run one). See [docs/local-model.md](docs/local-model.md).
 
-**Model testing status:** the Ollama path is tested with a mocked HTTP transport only. It has
-not been run against a live local model, and no claim is made about any model's accuracy on
-this task.
+**Model testing status:** the Ollama integration is tested with a mocked HTTP transport and has
+been only partially exercised with a local model. Two trials on the fictional demo case, with one
+locally installed 8-billion-parameter model and a separate bounded test harness, were both
+stopped by safety checks: the first by the harness's own model-identity check (an error in the
+harness, since corrected) before any answer, the second by a memory-pressure limit after two of
+the three steps had been answered. **Neither trial completed the investigation; no live-model
+validation has been completed, and no claim is made about any model's accuracy, usefulness,
+speed or memory use on this task.** See [docs/local-model.md](docs/local-model.md#testing-status).
 
 ## How it works
 
@@ -233,7 +238,9 @@ duplicate IDs, ambiguous evidence identities, sanitized answer records (sensitiv
 escaped tokens, nested values, malformed and truncated answers, repair prompts), decision
 integrity checks, CLI behavior and
 vendored-file hashes.
-Behavior is verified with fictional fixtures, scripted answers and mocked model traffic only.
+The test suite verifies behavior with fictional fixtures, scripted answers and mocked model
+traffic only. For the two partial local-model trials, see the model testing status under
+[Local model configuration](#local-model-configuration).
 
 ## Limitations
 
