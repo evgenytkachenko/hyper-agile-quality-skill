@@ -14,3 +14,9 @@ Implementation date: 2026-11-14. Synthetic development fixtures only.
 - GitHub Actions/rulesets: workflow prepared; hosted result must be checked for the pushed commit. Governance bootstrap intentionally requires owner review. No merge, release or branch protection change authorized/performed.
 
 Raw reports are generated locally under ignored `evidence/` and `reports/`. Review them before sharing; they can include execution paths. A concise result is not a replacement for those records.
+
+## Hosted-run follow-up
+
+The first hosted run passed TypeScript tests, deterministic evals, the HTTP demo and mutation testing. Browser installation failed because `ubuntu-latest` resolved to Ubuntu 26.04, unsupported by the pinned Playwright release. The workflow now pins Ubuntu 24.04; browser results must still be verified on the new commit.
+
+Dependency audit found vulnerable development dependencies. Vitest was updated to 4.1.12, tsx to 4.23.15, and a scoped typed-rest-client override selects qs 6.17.1. Current Stryker 10.1.1 still requests vulnerable minimatch 10.x, so a scoped override selects minimatch 11.0.8. Real selective Stryker execution validates this demo's compatibility; this does not establish every Stryker feature's compatibility. The updated lockfile audit reports zero known vulnerabilities; typecheck, 51 tests, the real HTTP demo and four-mutant run passed again. CI audits dependencies at moderate severity or above. No Vitest UI server is used.

@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
@@ -21,6 +21,7 @@ jobs:
           cache: npm
           cache-dependency-path: framework/package-lock.json
       - run: npm ci
+      - run: npm audit --audit-level=moderate
       - run: npm run typecheck && npm test && npm run evals
       - name: Reproduce incomplete PASS, critical FAIL, verified FIX
         run: npm run demo
@@ -41,7 +42,7 @@ jobs:
   governance:
     # This check makes bootstrap/change visible, not an immutable trust anchor.
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

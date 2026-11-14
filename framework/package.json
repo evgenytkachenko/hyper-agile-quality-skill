@@ -28,11 +28,19 @@
     "@stryker-mutator/core": "10.1.1",
     "@stryker-mutator/vitest-runner": "10.1.1",
     "@types/node": "24.10.1",
-    "tsx": "4.21.0",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
-    "vitest": "4.0.18"
+    "vitest": "4.1.12"
   },
   "dependencies": {
     "langsmith": "0.12.0"
+  },
+  "overrides": {
+    "@stryker-mutator/core": {
+      "minimatch": "11.0.8"
+    },
+    "typed-rest-client": {
+      "qs": "6.17.1"
+    }
   }
 }
