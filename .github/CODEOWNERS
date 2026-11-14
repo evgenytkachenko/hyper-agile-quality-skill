@@ -1,0 +1,7 @@
+# Requires branch/ruleset settings to enforce owner review; this file alone is not a gate.
+/.github/ @evgenytkachenko
+/framework/policy/ @evgenytkachenko
+/framework/scripts/ @evgenytkachenko
+/framework/tests/authorization.test.ts @evgenytkachenko
+/framework/tests/policy.test.ts @evgenytkachenko
+/framework/stryker.config.json @evgenytkachenko

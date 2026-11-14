@@ -1,0 +1,12 @@
+[
+  {
+    "requirement": "REQ-OWN-LAB",
+    "status": "passed",
+    "assertions": 1
+  },
+  {
+    "requirement": "REQ-AUTH",
+    "status": "passed",
+    "assertions": 1
+  }
+]

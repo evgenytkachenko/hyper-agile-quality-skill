@@ -374,3 +374,7 @@ The license covers the methodology files as written. It does not cover the book
 
 Dependencies (pydantic, httpx, PyYAML and the packages they require) are not included in this
 repository or in its packages. They are installed separately and keep their own licenses.
+
+## Independent AI QE framework (feature demonstration)
+
+The separate [framework/](framework/README.md) extends the evidence-first approach with a synthetic TypeScript lab portal, guarded coding and independent auditor skills, real HTTP negative controls, selective Stryker mutation testing, Playwright tests, risk gates, optional LangSmith tracing, and a GitHub Actions workflow. It preserves the original investigation CLI. Read its verification limits before using portfolio claims.

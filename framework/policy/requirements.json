@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "product": "Synthetic Lab Portal",
+  "requirements": [
+    {
+      "id": "REQ-OWN-LAB",
+      "risk": "LOW",
+      "criterion": "An authenticated patient can retrieve their own lab result."
+    },
+    {
+      "id": "REQ-AUTH",
+      "risk": "HIGH",
+      "criterion": "Requests without a recognized server session are rejected without lab data."
+    },
+    {
+      "id": "REQ-ISOLATION",
+      "risk": "HIGH",
+      "criterion": "Patient A must never access Patient B's lab results, even with a guessed valid result identifier."
+    }
+  ]
+}

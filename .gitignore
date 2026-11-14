@@ -8,3 +8,11 @@ build/
 haq-demo*/
 cases/
 out/
+# QE framework generated artifacts remain local; checked-in examples are under docs only.
+framework/node_modules/
+framework/evidence/
+framework/reports/
+framework/test-results/
+framework/playwright-report/
+framework/.stryker-tmp/
+framework/auditor/reports/

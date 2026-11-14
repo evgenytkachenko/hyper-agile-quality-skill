@@ -1,0 +1,59 @@
+name: QE framework verification
+on:
+  pull_request:
+  push:
+    branches: [main, 'feat/independent-qe-framework']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: framework
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: framework/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck && npm test && npm run evals
+      - name: Reproduce incomplete PASS, critical FAIL, verified FIX
+        run: npm run demo
+      - run: npm run test:mutation
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - run: npm run gate -- --require-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qe-evidence-${{ github.sha }}
+          path: |
+            framework/evidence
+            framework/reports
+            framework/playwright-report
+            framework/test-results
+          retention-days: 30
+  governance:
+    # This check makes bootstrap/change visible, not an immutable trust anchor.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require separate human approval of gate changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if ! git cat-file -e "$BASE_SHA:framework/policy/requirements.json"; then
+            echo '::error::REVIEW_REQUIRED: bootstrap trusted policy and protected branch settings with owner review.'
+            exit 1
+          fi
+          git diff --exit-code "$BASE_SHA" -- .github/workflows framework/policy framework/scripts framework/stryker.config.json
