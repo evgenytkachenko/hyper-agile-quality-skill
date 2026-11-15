@@ -25,7 +25,8 @@
     "evals:offline": "node --import tsx scripts/layered-evals.mjs offline",
     "evals:online": "node --import tsx scripts/layered-evals.mjs online",
     "evals:agents": "node --import tsx scripts/agent-tasks.mjs",
-    "evals:agents:selftest": "vitest run tests/agent-tasks.test.ts"
+    "evals:agents:selftest": "vitest run tests/agent-tasks.test.ts",
+    "evals:judge": "node --import tsx scripts/judge.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

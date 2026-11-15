@@ -68,3 +68,7 @@ The dataset and oracle are public and intentionally easy. Add independently auth
 ## Recorded real development trial
 
 See [captured answers and original/revised grades](../evals/agent-tasks/recorded-trial/README.md). Two fresh-context agents produced actual answers. This trial exposed an overly strict rubric; original failures are preserved, and revised grades are explicitly calibration replays, not fresh or held-out model results.
+
+## Advisory explanation judge
+
+An optional, versioned LLM-as-judge layer can review these task answers while the deterministic graders remain authoritative. See [LLM-JUDGE.md](LLM-JUDGE.md) for offline preparation/import, explicit provider opt-in, citation validation and calibration versus held-out evaluation. No provider runs in default CI.
