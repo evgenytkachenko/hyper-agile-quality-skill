@@ -1,0 +1,95 @@
+{
+  "schema": "agent-task-grade-v1",
+  "oracleHash": "268bd39697beccdf17156f6bf5b0291db8ade2e88abfe61b3df8b143f37183b3",
+  "graderHash": "762c2ff1f3b93b926ab6ff17a249ddeb70122965b591615696699a92d0b3dd5e",
+  "role": "auditor",
+  "binding": "d68dc0e1b9a45a1870ac22905485e64c3a2bc2ae2973c319be4d73ef98a36f96",
+  "answerHash": "694e301be3c20071bb10b7854a6ea0c3d917ae4ff7a6eba9c66705963d844eb6",
+  "modelSelfReported": "native-internal-agent-model-not-independently-verified",
+  "rows": [
+    {
+      "id": "auditor-isolation-gap",
+      "role": "auditor",
+      "decision": "REVIEW_REQUIRED",
+      "expectedDecision": "FAIL",
+      "missing": [],
+      "unexpected": [
+        "execution-unavailable"
+      ],
+      "evidenceValid": true,
+      "artifactsValid": true,
+      "unsupportedExecutionClaim": false,
+      "execution": {
+        "kind": "real-http-probe",
+        "executed": true,
+        "total": 2,
+        "passed": 2,
+        "observations": [
+          {
+            "schema": "synthetic-lab-observation-v1",
+            "synthetic": true,
+            "implementationVersion": "vulnerable",
+            "httpStatus": 200,
+            "authenticated": true,
+            "resourceExists": true,
+            "requestedOwnerMatches": false,
+            "dataReturned": true,
+            "returnedOwnerMatches": false
+          },
+          {
+            "schema": "synthetic-lab-observation-v1",
+            "synthetic": true,
+            "implementationVersion": "fixed",
+            "httpStatus": 403,
+            "authenticated": true,
+            "resourceExists": true,
+            "requestedOwnerMatches": false,
+            "dataReturned": false,
+            "returnedOwnerMatches": null
+          }
+        ]
+      },
+      "passed": false,
+      "toolBehavior": "NOT_EVALUATED: output cannot prove which tools were used"
+    },
+    {
+      "id": "auditor-clean-scope",
+      "role": "auditor",
+      "decision": "PASS",
+      "expectedDecision": "PASS",
+      "missing": [],
+      "unexpected": [],
+      "evidenceValid": true,
+      "artifactsValid": true,
+      "unsupportedExecutionClaim": false,
+      "execution": null,
+      "passed": true,
+      "toolBehavior": "NOT_EVALUATED: output cannot prove which tools were used"
+    },
+    {
+      "id": "auditor-no-evidence",
+      "role": "auditor",
+      "decision": "REVIEW_REQUIRED",
+      "expectedDecision": "REVIEW_REQUIRED",
+      "missing": [],
+      "unexpected": [],
+      "evidenceValid": true,
+      "artifactsValid": true,
+      "unsupportedExecutionClaim": false,
+      "execution": null,
+      "passed": true,
+      "toolBehavior": "NOT_EVALUATED: output cannot prove which tools were used"
+    }
+  ],
+  "taskPassRate": 0.6666666666666666,
+  "taskCount": 3,
+  "findingRecallOnSeededDefects": 0,
+  "cleanCaseFalsePositiveRate": 0,
+  "unresolvedCriticalTasks": 1,
+  "limitations": [
+    "Small public development set, not held-out or statistical model accuracy.",
+    "Decision/finding labels and citations are rubric checks, not semantic proof.",
+    "Only constrained patch/probe artifacts are executed by the harness. No arbitrary generated code is executed.",
+    "Actual agent tool behavior is not inferred from model self-report."
+  ]
+}

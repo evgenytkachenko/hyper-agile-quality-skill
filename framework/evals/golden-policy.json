@@ -1,0 +1,208 @@
+{
+  "datasetVersion": "1",
+  "scope": "deterministic grader calibration, not live model evaluation",
+  "cases": [
+    {
+      "id": "clean-low",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0
+      },
+      "expected": "PASS"
+    },
+    {
+      "id": "critical-security",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 1,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0
+      },
+      "expected": "FAIL"
+    },
+    {
+      "id": "weakened-assertion",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": false,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0
+      },
+      "expected": "FAIL"
+    },
+    {
+      "id": "zero-tests",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 0,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0
+      },
+      "expected": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "missing-execution",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": false,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0
+      },
+      "expected": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "critical-gap",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 1,
+        "unresolvedRisks": 0
+      },
+      "expected": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "medium-no-independent",
+      "input": {
+        "risk": "MEDIUM",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0
+      },
+      "expected": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "medium-independent",
+      "input": {
+        "risk": "MEDIUM",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0,
+        "independentValidation": true
+      },
+      "expected": "PASS"
+    },
+    {
+      "id": "high-unresolved",
+      "input": {
+        "risk": "HIGH",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 1,
+        "independentValidation": true
+      },
+      "expected": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "surviving-mutant",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0,
+        "mutationRequired": true,
+        "mutationTotal": 3,
+        "survived": 1,
+        "noCoverage": 0
+      },
+      "expected": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "no-mutations",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 0,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0,
+        "mutationRequired": true,
+        "mutationTotal": 0,
+        "survived": 0,
+        "noCoverage": 0
+      },
+      "expected": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "test-failed",
+      "input": {
+        "risk": "LOW",
+        "criticalViolations": 0,
+        "failedTests": 1,
+        "integrity": true,
+        "executionComplete": true,
+        "testCount": 2,
+        "sourceHash": "synthetic-source-hash",
+        "testHash": "synthetic-test-hash",
+        "criticalGaps": 0,
+        "unresolvedRisks": 0
+      },
+      "expected": "FAIL"
+    }
+  ]
+}

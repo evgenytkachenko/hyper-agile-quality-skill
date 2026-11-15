@@ -1,0 +1,51 @@
+{
+  "name": "haq-independent-qe-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --import tsx app/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/policy.test.ts",
+    "test:api": "vitest run tests/authorization.test.ts",
+    "test:legacy": "vitest run tests/coding-existing.test.ts",
+    "test:browser": "node scripts/run-browser.mjs",
+    "test:mutation": "node scripts/run-mutation.mjs",
+    "demo": "node scripts/demo.mjs",
+    "evals": "node scripts/evaluate.mjs",
+    "audit:model": "node scripts/model-audit.mjs",
+    "gate": "node scripts/check-evidence.mjs",
+    "mutation": "npm run test:mutation",
+    "test:ui": "npm run test:browser",
+    "trace:summary": "node scripts/trace-summary.mjs",
+    "evals:offline": "node --import tsx scripts/layered-evals.mjs offline",
+    "evals:online": "node --import tsx scripts/layered-evals.mjs online",
+    "evals:agents": "node --import tsx scripts/agent-tasks.mjs",
+    "evals:agents:selftest": "vitest run tests/agent-tasks.test.ts",
+    "evals:judge": "node --import tsx scripts/judge.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/vitest-runner": "10.1.1",
+    "@types/node": "24.10.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
+  },
+  "dependencies": {
+    "langsmith": "0.12.0"
+  },
+  "overrides": {
+    "@stryker-mutator/core": {
+      "minimatch": "11.0.8"
+    },
+    "typed-rest-client": {
+      "qs": "6.17.1"
+    }
+  }
+}
