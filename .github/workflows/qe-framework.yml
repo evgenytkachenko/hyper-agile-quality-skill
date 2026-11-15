@@ -23,6 +23,8 @@ jobs:
       - run: npm ci
       - run: npm audit --audit-level=moderate
       - run: npm run typecheck && npm test && npm run evals
+      - name: Exercise local layered evaluations (no cloud credentials)
+        run: npm run evals:offline && npm run evals:online
       - name: Reproduce incomplete PASS, critical FAIL, verified FIX
         run: npm run demo
       - run: npm run test:mutation

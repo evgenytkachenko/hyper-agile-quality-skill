@@ -21,7 +21,9 @@
     "gate": "node scripts/check-evidence.mjs",
     "mutation": "npm run test:mutation",
     "test:ui": "npm run test:browser",
-    "trace:summary": "node scripts/trace-summary.mjs"
+    "trace:summary": "node scripts/trace-summary.mjs",
+    "evals:offline": "node --import tsx scripts/layered-evals.mjs offline",
+    "evals:online": "node --import tsx scripts/layered-evals.mjs online"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",

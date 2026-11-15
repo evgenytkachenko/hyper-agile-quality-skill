@@ -76,3 +76,7 @@ See [architecture diagram](docs/architecture.md), [interview walkthrough](docs/i
 ### Repeatable evaluations of actual host-agent answers
 
 For both roles, `node scripts/agent-eval.mjs prepare coding` (or `auditor`) creates a bound request without expected answers. Give that request and the matching skill to a separate host agent; preserve its actual trace and JSON response. Grade it with `node scripts/agent-eval.mjs grade coding <actual-answer.json> [prior-result.json]`. Missing/duplicate/stale answers fail, and results keep role, model metadata, skill/dataset hashes and separate defect/clean denominators. Do not supply hand-written answers and describe them as a model run. The six development cases are visible in the repository and must not be described as blind or held-out benchmarks. Full live runs for both roles are not verified here.
+
+### Three-layer evaluation lab
+
+[Run the deterministic, offline dataset, and online monitoring walkthrough](docs/layered-evals.md). `npm run evals:offline` executes six real loopback HTTP cases against both implementations; `npm run evals:online` demonstrates per-request monitoring locally. Neither uploads unless `--upload-synthetic` is explicitly supplied. Hosted online evaluation requires the separate LangSmith evaluator setup described in the guide.
