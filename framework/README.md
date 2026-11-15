@@ -80,3 +80,7 @@ For both roles, `node scripts/agent-eval.mjs prepare coding` (or `auditor`) crea
 ### Three-layer evaluation lab
 
 [Run the deterministic, offline dataset, and online monitoring walkthrough](docs/layered-evals.md). `npm run evals:offline` executes six real loopback HTTP cases against both implementations; `npm run evals:online` demonstrates per-request monitoring locally. Neither uploads unless `--upload-synthetic` is explicitly supplied. Hosted online evaluation requires the separate LangSmith evaluator setup described in the guide.
+
+### Offline coding and auditor agent tasks
+
+The [agent task walkthrough](docs/AGENT-TASK-EVALS.md) provides six bounded tasks for actual agent responses, deterministic rubric grading, and executed constrained patch/API probe checks. Start with `npm run evals:agents -- prepare coding` or `prepare auditor`. Grader self-tests are explicitly not live agent evaluations; imported responses do not prove tool behavior or model provenance. Everything stays local by default.
